@@ -1,25 +1,65 @@
-use std::io::stdout;
+use std::io::{stdout, Write};
 
 use crossterm::{
+    cursor,
     event::{self, KeyCode},
-    execute,
-    style::{Color, Print, ResetColor, SetForegroundColor},
-    terminal::{self, disable_raw_mode, enable_raw_mode},
+    execute, queue,
+    style::{Color, ResetColor, SetForegroundColor},
+    terminal::{self, disable_raw_mode, enable_raw_mode, Clear},
 };
+use rectangle::{draw_rectangle, Rectangle};
+
+mod rectangle;
 
 fn main() -> std::io::Result<()> {
-    // or using functions
     let _ = init()?;
+    let mut rectangles = vec![];
+    let mut new_rectangle = None;
 
     loop {
+        queue!(stdout(), Clear(terminal::ClearType::All))?;
+
         match event::read()? {
-            event::Event::Key(key) => {
-                if key.code == KeyCode::Char('q') {
-                    break;
-                }
-            }
+            event::Event::Key(key_event) => match key_event.code {
+                KeyCode::Char(key) => match key {
+                    'q' => break,
+                    'r' => {
+                        if let Some(rect) = new_rectangle {
+                            new_rectangle = None;
+                            rectangles.push(rect);
+                        } else {
+                            let (x, y) = cursor::position()?;
+                            new_rectangle = Some(Rectangle::new_at(x, y));
+                        }
+                    }
+                    'h' => {
+                        execute!(stdout(), cursor::MoveLeft(1))?;
+                    }
+                    'j' => {
+                        execute!(stdout(), cursor::MoveDown(1))?;
+                    }
+                    'k' => {
+                        execute!(stdout(), cursor::MoveUp(1))?;
+                    }
+                    'l' => {
+                        execute!(stdout(), cursor::MoveRight(1))?;
+                    }
+                    _ => {}
+                },
+                _ => {}
+            },
             _ => {}
         }
+
+        if let Some(rect) = &mut new_rectangle {
+            let (cursor_x, cursor_y) = cursor::position()?;
+            rect.width = cursor_x - rect.x + 1;
+            rect.height = cursor_y - rect.y + 1;
+
+            draw_rectangle(&rect)?;
+        }
+
+        stdout().flush()?;
     }
 
     end()?;
@@ -34,8 +74,7 @@ fn init() -> std::io::Result<()> {
         stdout(),
         terminal::EnterAlternateScreen,
         terminal::Clear(terminal::ClearType::All),
-        SetForegroundColor(Color::Blue),
-        Print("Styled text here."),
+        SetForegroundColor(Color::White),
         ResetColor
     )?;
 
