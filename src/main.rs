@@ -53,8 +53,10 @@ fn main() -> std::io::Result<()> {
 
         if let Some(rect) = &mut new_rectangle {
             let (cursor_x, cursor_y) = cursor::position()?;
-            rect.width = cursor_x - rect.x + 1;
-            rect.height = cursor_y - rect.y + 1;
+            if cursor_x >= rect.x && cursor_y >= rect.y {
+                rect.width = cursor_x - rect.x + 1;
+                rect.height = cursor_y - rect.y + 1;
+            }
 
             draw_rectangle(&rect)?;
         }

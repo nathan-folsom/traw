@@ -25,9 +25,15 @@ pub fn draw_rectangle(rect: &Rectangle) -> std::io::Result<()> {
     let (cursor_x, cursor_y) = cursor::position()?;
 
     for y in 0..rect.height {
-        queue!(stdout(), cursor::MoveTo(rect.x, rect.y + y))?;
-        for _ in 0..rect.width {
-            queue!(stdout(), Print("*"))?;
+        for x in 0..rect.width {
+            let is_first_row = y == 0;
+            let is_last_row = y == rect.height - 1;
+            let is_first_col = x == 0;
+            let is_last_col = x == rect.width - 1;
+            if is_first_row || is_last_row || is_first_col || is_last_col {
+                queue!(stdout(), cursor::MoveTo(rect.x + x, rect.y + y))?;
+                queue!(stdout(), Print("*"))?;
+            }
         }
     }
 
