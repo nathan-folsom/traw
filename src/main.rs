@@ -54,10 +54,7 @@ fn main() -> std::io::Result<()> {
         }
 
         if let Some(rect) = &mut new_rectangle {
-            let (cursor_x, cursor_y) = cursor::position()?;
-            rect.width = cursor_x as i32 - rect.x + 1;
-            rect.height = cursor_y as i32 - rect.y + 1;
-
+            rect.update()?;
             renderer.render(rect)?;
         }
 

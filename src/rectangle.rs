@@ -1,15 +1,14 @@
-use std::io::stdout;
-
-use crossterm::{cursor, queue, style::Print};
+use crossterm::cursor;
 
 use crate::draw::Draw;
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct Rectangle {
     pub x: i32,
     pub y: i32,
     pub width: i32,
     pub height: i32,
+    shrink: Shrink,
 }
 
 impl Rectangle {
@@ -19,7 +18,26 @@ impl Rectangle {
             y,
             width: 1,
             height: 1,
+            shrink: Shrink::None,
         }
+    }
+
+    pub fn update(&mut self) -> std::io::Result<()> {
+        let (cursor_x, cursor_y) = cursor::position()?;
+
+        let next_width = cursor_x as i32 - self.x + 1;
+        let next_height = cursor_y as i32 - self.y + 1;
+
+        if next_width < self.width {
+            self.shrink = Shrink::X;
+        } else if next_height < self.height {
+            self.shrink = Shrink::Y;
+        }
+
+        self.width = next_width;
+        self.height = next_height;
+
+        Ok(())
     }
 }
 
@@ -54,6 +72,27 @@ impl Draw for Rectangle {
             }
         }
 
+        match self.shrink {
+            Shrink::X => {
+                for y in 0..self.height {
+                    points.push((self.x + self.width, self.y + y, ' '));
+                }
+            }
+            Shrink::Y => {
+                for x in 0..self.width {
+                    points.push((self.x + x, self.y + self.height, ' '));
+                }
+            }
+            _ => {}
+        }
+
         Ok(points)
     }
+}
+
+#[derive(Debug)]
+enum Shrink {
+    X,
+    Y,
+    None,
 }
