@@ -38,20 +38,19 @@ impl Draw for Rectangle {
                     queue!(stdout(), cursor::MoveTo(self.x + x, self.y + y))?;
 
                     let mut border_char = '*';
-                    unsafe {
-                        if is_first_row && is_first_col {
-                            border_char = char::from_u32_unchecked(0x0256d);
-                        } else if is_first_row && is_last_col {
-                            border_char = char::from_u32_unchecked(0x0256e);
-                        } else if is_last_row && is_last_col {
-                            border_char = char::from_u32_unchecked(0x0256f);
-                        } else if is_last_row && is_first_col {
-                            border_char = char::from_u32_unchecked(0x02570);
-                        } else if is_first_row || is_last_row {
-                            border_char = char::from_u32_unchecked(0x02500);
-                        } else if is_first_col || is_last_col {
-                            border_char = char::from_u32_unchecked(0x02502);
-                        }
+
+                    if is_first_row && is_first_col {
+                        border_char = '╭';
+                    } else if is_first_row && is_last_col {
+                        border_char = '╮';
+                    } else if is_last_row && is_last_col {
+                        border_char = '╯';
+                    } else if is_last_row && is_first_col {
+                        border_char = '╰';
+                    } else if is_first_row || is_last_row {
+                        border_char = '─';
+                    } else if is_first_col || is_last_col {
+                        border_char = '│';
                     }
 
                     queue!(stdout(), Print(border_char))?;
