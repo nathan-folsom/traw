@@ -7,8 +7,10 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode, Clear},
 };
-use rectangle::{draw_rectangle, Rectangle};
+use draw::Draw;
+use rectangle::Rectangle;
 
+mod draw;
 mod rectangle;
 
 fn main() -> std::io::Result<()> {
@@ -58,7 +60,7 @@ fn main() -> std::io::Result<()> {
                 rect.height = cursor_y - rect.y + 1;
             }
 
-            draw_rectangle(&rect)?;
+            rect.draw()?;
         }
 
         stdout().flush()?;

@@ -2,6 +2,8 @@ use std::io::stdout;
 
 use crossterm::{cursor, queue, style::Print};
 
+use crate::draw::Draw;
+
 #[derive(Default, Debug)]
 pub struct Rectangle {
     pub x: u16,
@@ -21,23 +23,44 @@ impl Rectangle {
     }
 }
 
-pub fn draw_rectangle(rect: &Rectangle) -> std::io::Result<()> {
-    let (cursor_x, cursor_y) = cursor::position()?;
+impl Draw for Rectangle {
+    fn draw(&self) -> std::io::Result<()> {
+        let (cursor_x, cursor_y) = cursor::position()?;
 
-    for y in 0..rect.height {
-        for x in 0..rect.width {
-            let is_first_row = y == 0;
-            let is_last_row = y == rect.height - 1;
-            let is_first_col = x == 0;
-            let is_last_col = x == rect.width - 1;
-            if is_first_row || is_last_row || is_first_col || is_last_col {
-                queue!(stdout(), cursor::MoveTo(rect.x + x, rect.y + y))?;
-                queue!(stdout(), Print("*"))?;
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let is_first_row = y == 0;
+                let is_last_row = y == self.height - 1;
+                let is_first_col = x == 0;
+                let is_last_col = x == self.width - 1;
+
+                if is_first_row || is_last_row || is_first_col || is_last_col {
+                    queue!(stdout(), cursor::MoveTo(self.x + x, self.y + y))?;
+
+                    let mut border_char = '*';
+                    unsafe {
+                        if is_first_row && is_first_col {
+                            border_char = char::from_u32_unchecked(0x0256d);
+                        } else if is_first_row && is_last_col {
+                            border_char = char::from_u32_unchecked(0x0256e);
+                        } else if is_last_row && is_last_col {
+                            border_char = char::from_u32_unchecked(0x0256f);
+                        } else if is_last_row && is_first_col {
+                            border_char = char::from_u32_unchecked(0x02570);
+                        } else if is_first_row || is_last_row {
+                            border_char = char::from_u32_unchecked(0x02500);
+                        } else if is_first_col || is_last_col {
+                            border_char = char::from_u32_unchecked(0x02502);
+                        }
+                    }
+
+                    queue!(stdout(), Print(border_char))?;
+                }
             }
         }
+
+        queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y))?;
+
+        Ok(())
     }
-
-    queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y))?;
-
-    Ok(())
 }
