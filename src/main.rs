@@ -58,6 +58,10 @@ fn main() -> std::io::Result<()> {
             renderer.render(rect)?;
         }
 
+        for r in &rectangles {
+            renderer.render(r)?;
+        }
+
         stdout().flush()?;
     }
 
