@@ -18,7 +18,7 @@ fn main() -> std::io::Result<()> {
     let mut rectangles = vec![];
     let mut new_rectangle = None;
     let (width, height) = terminal::size()?;
-    let renderer = Renderer::new(width, height);
+    let mut renderer = Renderer::new(width, height);
 
     loop {
         match event::read()? {
@@ -31,7 +31,7 @@ fn main() -> std::io::Result<()> {
                             rectangles.push(rect);
                         } else {
                             let (x, y) = cursor::position()?;
-                            new_rectangle = Some(Rectangle::new_at(x, y));
+                            new_rectangle = Some(Rectangle::new_at(x as i32, y as i32));
                         }
                     }
                     'h' => {
@@ -55,10 +55,8 @@ fn main() -> std::io::Result<()> {
 
         if let Some(rect) = &mut new_rectangle {
             let (cursor_x, cursor_y) = cursor::position()?;
-            if cursor_x >= rect.x && cursor_y >= rect.y {
-                rect.width = cursor_x - rect.x + 1;
-                rect.height = cursor_y - rect.y + 1;
-            }
+            rect.width = cursor_x as i32 - rect.x + 1;
+            rect.height = cursor_y as i32 - rect.y + 1;
 
             renderer.render(rect)?;
         }

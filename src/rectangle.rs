@@ -6,14 +6,14 @@ use crate::draw::Draw;
 
 #[derive(Default, Debug)]
 pub struct Rectangle {
-    pub x: u16,
-    pub y: u16,
-    pub width: u16,
-    pub height: u16,
+    pub x: i32,
+    pub y: i32,
+    pub width: i32,
+    pub height: i32,
 }
 
 impl Rectangle {
-    pub fn new_at(x: u16, y: u16) -> Rectangle {
+    pub fn new_at(x: i32, y: i32) -> Rectangle {
         Self {
             x,
             y,
@@ -24,8 +24,8 @@ impl Rectangle {
 }
 
 impl Draw for Rectangle {
-    fn draw(&self) -> std::io::Result<()> {
-        let (cursor_x, cursor_y) = cursor::position()?;
+    fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>> {
+        let mut points = vec![];
 
         for y in 0..self.height {
             for x in 0..self.width {
@@ -34,32 +34,26 @@ impl Draw for Rectangle {
                 let is_first_col = x == 0;
                 let is_last_col = x == self.width - 1;
 
-                if is_first_row || is_last_row || is_first_col || is_last_col {
-                    queue!(stdout(), cursor::MoveTo(self.x + x, self.y + y))?;
+                let mut to_draw = ' ';
 
-                    let mut border_char = '*';
-
-                    if is_first_row && is_first_col {
-                        border_char = '╭';
-                    } else if is_first_row && is_last_col {
-                        border_char = '╮';
-                    } else if is_last_row && is_last_col {
-                        border_char = '╯';
-                    } else if is_last_row && is_first_col {
-                        border_char = '╰';
-                    } else if is_first_row || is_last_row {
-                        border_char = '─';
-                    } else if is_first_col || is_last_col {
-                        border_char = '│';
-                    }
-
-                    queue!(stdout(), Print(border_char))?;
+                if is_first_row && is_first_col {
+                    to_draw = '╭';
+                } else if is_first_row && is_last_col {
+                    to_draw = '╮';
+                } else if is_last_row && is_last_col {
+                    to_draw = '╯';
+                } else if is_last_row && is_first_col {
+                    to_draw = '╰';
+                } else if is_first_row || is_last_row {
+                    to_draw = '─';
+                } else if is_first_col || is_last_col {
+                    to_draw = '│';
                 }
+
+                points.push((self.x + x, self.y + y, to_draw));
             }
         }
 
-        queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y))?;
-
-        Ok(())
+        Ok(points)
     }
 }
