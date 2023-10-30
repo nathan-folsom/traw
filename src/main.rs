@@ -3,11 +3,11 @@ use std::io::{stdout, Write};
 use crossterm::{
     cursor,
     event::{self, KeyCode},
-    execute, queue,
+    execute,
     style::{Color, ResetColor, SetForegroundColor},
-    terminal::{self, disable_raw_mode, enable_raw_mode, Clear},
+    terminal::{self, disable_raw_mode, enable_raw_mode},
 };
-use draw::Draw;
+use draw::Renderer;
 use rectangle::Rectangle;
 
 mod draw;
@@ -17,10 +17,10 @@ fn main() -> std::io::Result<()> {
     let _ = init()?;
     let mut rectangles = vec![];
     let mut new_rectangle = None;
+    let (width, height) = terminal::size()?;
+    let renderer = Renderer::new(width, height);
 
     loop {
-        queue!(stdout(), Clear(terminal::ClearType::All))?;
-
         match event::read()? {
             event::Event::Key(key_event) => match key_event.code {
                 KeyCode::Char(key) => match key {
@@ -60,7 +60,7 @@ fn main() -> std::io::Result<()> {
                 rect.height = cursor_y - rect.y + 1;
             }
 
-            rect.draw()?;
+            renderer.render(rect)?;
         }
 
         stdout().flush()?;
