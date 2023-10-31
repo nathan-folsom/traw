@@ -17,9 +17,9 @@ pub struct Renderer {
 impl Renderer {
     pub fn new(width: u16, height: u16) -> Self {
         let mut initial_state = vec![];
-        for y in 0..height {
+        for _ in 0..width {
             let mut cols = vec![];
-            for x in 0..width {
+            for _ in 0..height {
                 cols.push(' ');
             }
             initial_state.push(cols);
@@ -39,7 +39,7 @@ impl Renderer {
         let points = shape.draw()?;
 
         for point in points {
-            let mut current_char = self.state[point.0 as usize][point.1 as usize];
+            let current_char = self.state[point.0 as usize][point.1 as usize];
 
             if current_char != point.2 {
                 queue!(
