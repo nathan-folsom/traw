@@ -8,6 +8,7 @@ pub struct Rectangle {
     pub y: i32,
     pub width: i32,
     pub height: i32,
+    pub text: Vec<char>,
     shrink: Shrink,
 }
 
@@ -18,6 +19,7 @@ impl Rectangle {
             y,
             width: 1,
             height: 1,
+            text: vec![],
             shrink: Shrink::None,
         }
     }
@@ -39,6 +41,10 @@ impl Rectangle {
 
         Ok(())
     }
+
+    pub fn on_char(&mut self, key: char) {
+        self.text.push(key);
+    }
 }
 
 impl Draw for Rectangle {
@@ -52,7 +58,13 @@ impl Draw for Rectangle {
                 let is_first_col = x == 0;
                 let is_last_col = x == self.width - 1;
 
+                let char_index = x - 1 + (y - 1) * (self.width - 2);
+
                 let mut to_draw = ' ';
+
+                if char_index >= 0 && (char_index as usize) < self.text.len() {
+                    to_draw = self.text[char_index as usize];
+                }
 
                 if is_first_row && is_first_col {
                     to_draw = '╭';

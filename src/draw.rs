@@ -1,16 +1,16 @@
 use std::io::stdout;
 
-use crossterm::{cursor, queue, style::Print, terminal};
+use crossterm::{cursor, queue, style::Print};
 
 pub trait Draw {
     fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>>;
 }
 
 pub struct Renderer {
-    x: u32,
-    y: u32,
-    width: u16,
-    height: u16,
+    // x: u32,
+    // y: u32,
+    // width: u16,
+    // height: u16,
     state: Vec<Vec<char>>,
 }
 
@@ -26,10 +26,10 @@ impl Renderer {
         }
 
         Self {
-            x: 0,
-            y: 0,
-            width,
-            height,
+            //         x: 0,
+            //         y: 0,
+            //         width,
+            //         height,
             state: initial_state,
         }
     }
