@@ -1,6 +1,5 @@
 use std::io::{stdout, Write};
 
-use arrow::Arrow;
 use crossterm::{
     cursor,
     event::{self, KeyCode, KeyEvent},
@@ -9,11 +8,15 @@ use crossterm::{
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
 use draw::Renderer;
+use mode::Mode;
 use rectangle::Rectangle;
+use status_bar::StatusBar;
 
 mod arrow;
 mod draw;
+mod mode;
 mod rectangle;
+mod status_bar;
 
 fn main() -> std::io::Result<()> {
     let _ = init()?;
@@ -21,6 +24,7 @@ fn main() -> std::io::Result<()> {
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
     let mut mode = Mode::Normal;
+    let mut status_bar = StatusBar::default();
 
     loop {
         match event::read()? {
@@ -37,6 +41,7 @@ fn main() -> std::io::Result<()> {
                         handle_motions(key_event)?;
                     }
                 }
+
                 match key_event.code {
                     KeyCode::Char(key) => match &mut mode {
                         Mode::Text(rect) => {
@@ -60,6 +65,7 @@ fn main() -> std::io::Result<()> {
                         },
                         _ => {}
                     },
+
                     KeyCode::Enter => match mode {
                         Mode::DrawRectangle(rect) => {
                             queue!(
@@ -79,6 +85,9 @@ fn main() -> std::io::Result<()> {
             }
             _ => {}
         }
+
+        status_bar.update(&mode)?;
+        renderer.render_sticky(&status_bar)?;
 
         match &mut mode {
             Mode::Normal => {}
@@ -119,13 +128,6 @@ fn end() -> std::io::Result<()> {
     disable_raw_mode()?;
 
     Ok(())
-}
-
-enum Mode {
-    Normal,
-    DrawRectangle(Rectangle),
-    DrawArrow(Arrow),
-    Text(Rectangle),
 }
 
 fn handle_motions(event: KeyEvent) -> std::io::Result<()> {

@@ -6,6 +6,10 @@ pub trait Draw {
     fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>>;
 }
 
+pub trait DrawSticky {
+    fn draw(&self) -> std::io::Result<Vec<(u16, u16, char)>>;
+}
+
 pub struct Renderer {
     // x: u32,
     // y: u32,
@@ -47,6 +51,24 @@ impl Renderer {
                     cursor::MoveTo(point.0 as u16, point.1 as u16),
                     Print(point.2)
                 )?;
+                self.state[point.0 as usize][point.1 as usize] = point.2;
+            }
+        }
+
+        queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
+
+        Ok(())
+    }
+
+    pub fn render_sticky(&mut self, shape: &impl DrawSticky) -> std::io::Result<()> {
+        let (cursor_x, cursor_y) = cursor::position()?;
+        let points = shape.draw()?;
+
+        for point in points {
+            let current_char = self.state[point.0 as usize][point.1 as usize];
+
+            if current_char != point.2 {
+                queue!(stdout(), cursor::MoveTo(point.0, point.1), Print(point.2))?;
                 self.state[point.0 as usize][point.1 as usize] = point.2;
             }
         }
