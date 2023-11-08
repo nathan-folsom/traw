@@ -73,7 +73,7 @@ impl Rectangle {
             || cursor_on_bottom_border
             || cursor_on_left_border
         {
-            return Ok(RectangleIntersection::Edge);
+            return Ok(RectangleIntersection::Edge((c_x, c_y)));
         }
 
         Ok(RectangleIntersection::Inner)
@@ -144,6 +144,6 @@ enum Shrink {
 
 pub enum RectangleIntersection {
     None,
-    Edge,
+    Edge((i32, i32)),
     Inner,
 }

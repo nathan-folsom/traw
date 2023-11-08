@@ -22,6 +22,7 @@ mod status_bar;
 fn main() -> std::io::Result<()> {
     let _ = init()?;
     let mut rectangles = vec![];
+    let mut arrows = vec![];
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
     let mut mode = Mode::Normal;
@@ -65,8 +66,10 @@ fn main() -> std::io::Result<()> {
                                                 x as i32, y as i32,
                                             ));
                                         }
-                                        RectangleIntersection::Edge => {
-                                            mode = Mode::DrawArrow(Arrow {});
+                                        RectangleIntersection::Edge(start) => {
+                                            mode = Mode::DrawArrow(Arrow {
+                                                points: vec![start],
+                                            });
                                         }
                                         RectangleIntersection::Inner => {
                                             todo!();
@@ -93,6 +96,10 @@ fn main() -> std::io::Result<()> {
                             rectangles.push(rect);
                             mode = Mode::Normal;
                         }
+                        Mode::DrawArrow(arrow) => {
+                            arrows.push(arrow);
+                            mode = Mode::Normal;
+                        }
                         _ => {}
                     },
                     _ => {}
@@ -112,6 +119,10 @@ fn main() -> std::io::Result<()> {
             }
             Mode::Text(rect) => {
                 renderer.render(rect)?;
+            }
+            Mode::DrawArrow(arrow) => {
+                arrow.update()?;
+                renderer.render(arrow)?;
             }
             _ => {}
         }
@@ -172,30 +183,14 @@ fn get_rectangle_intersection(
     rectangles: &Vec<Rectangle>,
 ) -> std::io::Result<RectangleIntersection> {
     for rectangle in rectangles {
-        let intersection = rectangle.get_intersection();
-
-        if intersection.is_ok() {
-            return intersection;
+        match rectangle.get_intersection() {
+            Ok(RectangleIntersection::None) => {}
+            Ok(RectangleIntersection::Inner | RectangleIntersection::Edge(_)) => {
+                return rectangle.get_intersection();
+            }
+            _ => {}
         }
     }
 
     Ok(RectangleIntersection::None)
-}
-
-fn cursor_on_rectangle_border(rectangles: &Vec<Rectangle>) -> std::io::Result<bool> {
-    for rectangle in rectangles {
-        let (cursor_x, cursor_y) = cursor::position()?;
-        let cursor_on_top_border = cursor_y == rectangle.y as u16;
-        let cursor_on_bottom_border = cursor_y as i32 == rectangle.y + rectangle.height - 1;
-    }
-
-    Ok(false)
-}
-
-fn cursor_in_rectangle(rectangles: &Vec<Rectangle>) -> std::io::Result<bool> {
-    for rectangle in rectangles {
-        let (cursor_x, cursor_y) = cursor::position()?;
-    }
-
-    Ok(false)
 }
