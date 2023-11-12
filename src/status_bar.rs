@@ -1,10 +1,11 @@
-use crossterm::terminal;
+use crossterm::{cursor, terminal};
 
 use crate::{draw::DrawSticky, mode::Mode};
 
 #[derive(Default)]
 pub struct StatusBar {
     mode_text: &'static str,
+    cursor_text: String,
 }
 
 const NORMAL: &str = "Normal";
@@ -29,6 +30,9 @@ impl StatusBar {
             }
         }
 
+        let (c_x, c_y) = cursor::position()?;
+        self.cursor_text = format!("{}:{}", c_x, c_y);
+
         Ok(())
     }
 }
@@ -38,15 +42,25 @@ impl DrawSticky for StatusBar {
         let (w, h) = terminal::size()?;
         let mut row = vec![];
 
-        let mut mode_chars = self.mode_text.chars();
+        let cursor_text_length = self.cursor_text.chars().count();
 
         for x in 0..w {
-            let found_char = mode_chars.next();
-
             let mut next_char = ' ';
 
-            if let Some(c) = found_char {
+            if let Some(c) = self.mode_text.chars().nth(x as usize) {
                 next_char = c;
+            }
+
+            let distance_from_end = (w as usize).abs_diff(x as usize);
+
+            if distance_from_end <= cursor_text_length {
+                if let Some(c) = self
+                    .cursor_text
+                    .chars()
+                    .nth(distance_from_end.abs_diff(cursor_text_length))
+                {
+                    next_char = c;
+                }
             }
 
             row.push((x, h - 1, next_char));
