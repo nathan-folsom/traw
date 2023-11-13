@@ -8,30 +8,25 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
-use draw::Renderer;
 use mode::Mode;
 use rectangle::{Rectangle, RectangleIntersection};
-use status_bar::StatusBar;
+use state::State;
 
 mod arrow;
 mod draw;
 mod mode;
 mod rectangle;
+mod state;
 mod status_bar;
 
 fn main() -> std::io::Result<()> {
     let _ = init()?;
-    let mut rectangles = vec![];
-    let mut arrows = vec![];
-    let (width, height) = terminal::size()?;
-    let mut renderer = Renderer::new(width, height);
-    let mut mode = Mode::Normal;
-    let mut status_bar = StatusBar::default();
+    let mut state = State::init()?;
 
     loop {
         match event::read()? {
             event::Event::Key(key_event) => {
-                match &mut mode {
+                match state.mode {
                     Mode::Normal => {
                         handle_motions(key_event)?;
                     }
@@ -45,33 +40,34 @@ fn main() -> std::io::Result<()> {
                 }
 
                 match key_event.code {
-                    KeyCode::Char(key) => match &mut mode {
+                    KeyCode::Char(key) => match &mut state.mode {
                         Mode::Text(rect) => {
                             rect.on_char(key);
                             queue!(stdout(), cursor::MoveRight(1))?;
                         }
                         Mode::Normal | Mode::DrawRectangle(_) => match key {
                             'q' => break,
-                            'i' => match mode {
+                            'i' => match state.mode {
                                 Mode::DrawRectangle(rect) => {
-                                    mode = Mode::Text(rect);
+                                    state.mode = Mode::Text(rect);
                                 }
                                 Mode::Normal => {
                                     let (x, y) = cursor::position()?;
-                                    let intersection = get_rectangle_intersection(&rectangles)?;
+                                    let intersection =
+                                        get_rectangle_intersection(&state.rectangles)?;
 
                                     match intersection {
                                         RectangleIntersection::None => {
-                                            mode = Mode::DrawRectangle(Rectangle::new_at(
+                                            state.mode = Mode::DrawRectangle(Rectangle::new_at(
                                                 x as i32, y as i32,
                                             ));
                                         }
                                         RectangleIntersection::Edge => {
-                                            mode = Mode::DrawArrow(Arrow { points: vec![] });
+                                            state.mode = Mode::DrawArrow(Arrow { points: vec![] });
                                         }
                                         RectangleIntersection::Inner => {
                                             todo!();
-                                            // mode = Mode::Text(());
+                                            // state.mode = Mode::Text(());
                                         }
                                     }
                                 }
@@ -82,21 +78,21 @@ fn main() -> std::io::Result<()> {
                         _ => {}
                     },
 
-                    KeyCode::Enter => match mode {
+                    KeyCode::Enter => match state.mode {
                         Mode::DrawRectangle(rect) => {
                             queue!(
                                 stdout(),
                                 cursor::MoveTo(rect.x as u16 + 1, rect.y as u16 + 1)
                             )?;
-                            mode = Mode::Text(rect);
+                            state.mode = Mode::Text(rect);
                         }
                         Mode::Text(rect) => {
-                            rectangles.push(rect);
-                            mode = Mode::Normal;
+                            state.rectangles.push(rect);
+                            state.mode = Mode::Normal;
                         }
                         Mode::DrawArrow(arrow) => {
-                            arrows.push(arrow);
-                            mode = Mode::Normal;
+                            state.arrows.push(arrow);
+                            state.mode = Mode::Normal;
                         }
                         _ => {}
                     },
@@ -106,23 +102,22 @@ fn main() -> std::io::Result<()> {
             _ => {}
         }
 
-        status_bar.update(&mode)?;
-        renderer.render_sticky(&status_bar)?;
+        state.status_bar.update(&state.mode)?;
+        state.renderer.render_sticky(&state.status_bar)?;
 
-        match &mut mode {
+        match &mut state.mode {
             Mode::Normal => {}
             Mode::DrawRectangle(rect) => {
                 rect.update()?;
-                renderer.render(rect)?;
+                state.renderer.render(rect)?;
             }
             Mode::Text(rect) => {
-                renderer.render(rect)?;
+                state.renderer.render(rect)?;
             }
             Mode::DrawArrow(arrow) => {
                 arrow.update()?;
-                renderer.render(arrow)?;
+                state.renderer.render(arrow)?;
             }
-            _ => {}
         }
 
         stdout().flush()?;
