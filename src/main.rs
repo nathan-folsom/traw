@@ -53,8 +53,7 @@ fn main() -> std::io::Result<()> {
                                 }
                                 Mode::Normal => {
                                     let (x, y) = cursor::position()?;
-                                    let intersection =
-                                        get_rectangle_intersection(&state.rectangles)?;
+                                    let intersection = state.get_rectangle_intersection()?;
 
                                     match intersection {
                                         RectangleIntersection::None => {
@@ -170,20 +169,4 @@ fn handle_motions(event: KeyEvent) -> std::io::Result<()> {
     }
 
     Ok(())
-}
-
-fn get_rectangle_intersection(
-    rectangles: &Vec<Rectangle>,
-) -> std::io::Result<RectangleIntersection> {
-    for rectangle in rectangles {
-        match rectangle.get_intersection() {
-            Ok(RectangleIntersection::None) => {}
-            Ok(RectangleIntersection::Inner | RectangleIntersection::Edge) => {
-                return rectangle.get_intersection();
-            }
-            _ => {}
-        }
-    }
-
-    Ok(RectangleIntersection::None)
 }

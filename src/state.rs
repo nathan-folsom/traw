@@ -1,7 +1,11 @@
 use crossterm::terminal;
 
 use crate::{
-    arrow::Arrow, draw::Renderer, mode::Mode, rectangle::Rectangle, status_bar::StatusBar,
+    arrow::Arrow,
+    draw::Renderer,
+    mode::Mode,
+    rectangle::{Rectangle, RectangleIntersection},
+    status_bar::StatusBar,
 };
 
 pub struct State {
@@ -23,5 +27,19 @@ impl State {
             mode: Mode::Normal,
             status_bar: StatusBar::default(),
         })
+    }
+
+    pub fn get_rectangle_intersection(&self) -> std::io::Result<RectangleIntersection> {
+        for rectangle in &self.rectangles {
+            match rectangle.get_intersection() {
+                Ok(RectangleIntersection::None) => {}
+                Ok(RectangleIntersection::Inner | RectangleIntersection::Edge) => {
+                    return rectangle.get_intersection();
+                }
+                _ => {}
+            }
+        }
+
+        Ok(RectangleIntersection::None)
     }
 }
