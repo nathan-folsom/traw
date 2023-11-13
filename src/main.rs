@@ -66,10 +66,8 @@ fn main() -> std::io::Result<()> {
                                                 x as i32, y as i32,
                                             ));
                                         }
-                                        RectangleIntersection::Edge(start) => {
-                                            mode = Mode::DrawArrow(Arrow {
-                                                points: vec![start],
-                                            });
+                                        RectangleIntersection::Edge => {
+                                            mode = Mode::DrawArrow(Arrow { points: vec![] });
                                         }
                                         RectangleIntersection::Inner => {
                                             todo!();
@@ -185,7 +183,7 @@ fn get_rectangle_intersection(
     for rectangle in rectangles {
         match rectangle.get_intersection() {
             Ok(RectangleIntersection::None) => {}
-            Ok(RectangleIntersection::Inner | RectangleIntersection::Edge(_)) => {
+            Ok(RectangleIntersection::Inner | RectangleIntersection::Edge) => {
                 return rectangle.get_intersection();
             }
             _ => {}

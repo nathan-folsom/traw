@@ -78,7 +78,9 @@ fn get_char(prev: &(i32, i32), current: &(i32, i32), next: &(i32, i32)) -> char 
 
 #[cfg(test)]
 mod test {
-    use super::get_char;
+    use crate::draw::Draw;
+
+    use super::{get_char, Arrow};
 
     #[test]
     fn should_get_horizontal_bar() {
@@ -138,5 +140,15 @@ mod test {
 
         let next_char = get_char(&prev, &current, &next);
         assert_eq!('┐', next_char);
+    }
+
+    #[test]
+    fn should_not_render_first_position() {
+        let arrow = Arrow {
+            points: vec![(0, 0), (1, 0), (2, 0)],
+        };
+
+        let render = arrow.draw().unwrap();
+        assert_eq!(render.len(), arrow.points.len() - 1);
     }
 }
