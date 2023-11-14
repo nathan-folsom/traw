@@ -13,6 +13,7 @@ use rectangle::{Rectangle, RectangleIntersection};
 use state::State;
 
 mod arrow;
+mod characters;
 mod draw;
 mod mode;
 mod rectangle;

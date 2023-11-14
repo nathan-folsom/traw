@@ -1,6 +1,12 @@
 use crossterm::cursor;
 
-use crate::draw::Draw;
+use crate::{
+    characters::{
+        CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
+        VERTICAL_BAR,
+    },
+    draw::Draw,
+};
 
 #[derive(Debug)]
 pub struct Rectangle {
@@ -100,17 +106,17 @@ impl Draw for Rectangle {
                 }
 
                 if is_first_row && is_first_col {
-                    to_draw = '╭';
+                    to_draw = CORNER_3_ROUNDED;
                 } else if is_first_row && is_last_col {
-                    to_draw = '╮';
+                    to_draw = CORNER_4_ROUNDED;
                 } else if is_last_row && is_last_col {
-                    to_draw = '╯';
+                    to_draw = CORNER_1_ROUNDED;
                 } else if is_last_row && is_first_col {
-                    to_draw = '╰';
+                    to_draw = CORNER_2_ROUNDED;
                 } else if is_first_row || is_last_row {
-                    to_draw = '─';
+                    to_draw = HORIZONTAL_BAR;
                 } else if is_first_col || is_last_col {
-                    to_draw = '│';
+                    to_draw = VERTICAL_BAR;
                 }
 
                 points.push((self.x + x, self.y + y, to_draw));

@@ -1,6 +1,9 @@
 use crossterm::cursor;
 
-use crate::draw::Draw;
+use crate::{
+    characters::{CORNER_1, CORNER_2, CORNER_3, CORNER_4, HORIZONTAL_BAR, VERTICAL_BAR},
+    draw::Draw,
+};
 
 pub struct Arrow {
     pub points: Vec<(i32, i32)>,
@@ -35,8 +38,8 @@ impl Draw for Arrow {
                     point.0,
                     point.1,
                     match is_vertical {
-                        true => '│',
-                        false => '─',
+                        true => VERTICAL_BAR,
+                        false => HORIZONTAL_BAR,
                     },
                 ));
                 continue;
@@ -60,17 +63,17 @@ fn get_char(prev: &(i32, i32), current: &(i32, i32), next: &(i32, i32)) -> char 
     let negative_x = prev.0 < current.0 || next.0 < current.0;
 
     if negative_y && negative_x {
-        '┘'
+        CORNER_1
     } else if negative_y && positive_x {
-        '└'
+        CORNER_2
     } else if positive_x && positive_y {
-        '┌'
+        CORNER_3
     } else if negative_x && positive_y {
-        '┐'
+        CORNER_4
     } else if positive_y || negative_y {
-        '│'
+        VERTICAL_BAR
     } else if positive_x || negative_x {
-        '─'
+        HORIZONTAL_BAR
     } else {
         ' '
     }
@@ -78,6 +81,7 @@ fn get_char(prev: &(i32, i32), current: &(i32, i32), next: &(i32, i32)) -> char 
 
 #[cfg(test)]
 mod test {
+    use crate::characters::*;
     use crate::draw::Draw;
 
     use super::{get_char, Arrow};
@@ -89,7 +93,7 @@ mod test {
         let next = (2, 0);
 
         let next_char = get_char(&prev, &current, &next);
-        assert_eq!('─', next_char);
+        assert_eq!(HORIZONTAL_BAR, next_char);
     }
 
     #[test]
@@ -99,7 +103,7 @@ mod test {
         let next = (0, 2);
 
         let next_char = get_char(&prev, &current, &next);
-        assert_eq!('│', next_char);
+        assert_eq!(VERTICAL_BAR, next_char);
     }
 
     #[test]
@@ -109,7 +113,7 @@ mod test {
         let next = (1, 0);
 
         let next_char = get_char(&prev, &current, &next);
-        assert_eq!('┘', next_char);
+        assert_eq!(CORNER_1, next_char);
     }
 
     #[test]
@@ -119,7 +123,7 @@ mod test {
         let next = (1, 1);
 
         let next_char = get_char(&prev, &current, &next);
-        assert_eq!('└', next_char);
+        assert_eq!(CORNER_2, next_char);
     }
 
     #[test]
@@ -129,7 +133,7 @@ mod test {
         let next = (1, 0);
 
         let next_char = get_char(&prev, &current, &next);
-        assert_eq!('┌', next_char);
+        assert_eq!(CORNER_3, next_char);
     }
 
     #[test]
@@ -139,7 +143,7 @@ mod test {
         let next = (1, 1);
 
         let next_char = get_char(&prev, &current, &next);
-        assert_eq!('┐', next_char);
+        assert_eq!(CORNER_4, next_char);
     }
 
     #[test]
