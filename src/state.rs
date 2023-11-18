@@ -29,17 +29,19 @@ impl State {
         })
     }
 
-    pub fn get_rectangle_intersection(&self) -> std::io::Result<RectangleIntersection> {
-        for rectangle in &self.rectangles {
+    pub fn get_rectangle_intersection(&self) -> std::io::Result<(RectangleIntersection, usize)> {
+        for i in 0..self.rectangles.len() {
+            let rectangle = &self.rectangles[i];
+            let intersection = rectangle.get_intersection();
             match rectangle.get_intersection() {
                 Ok(RectangleIntersection::None) => {}
-                Ok(RectangleIntersection::Inner | RectangleIntersection::Edge) => {
-                    return rectangle.get_intersection();
+                Ok(intersection_type) => {
+                    return Ok((intersection_type, i));
                 }
                 _ => {}
             }
         }
 
-        Ok(RectangleIntersection::None)
+        Ok((RectangleIntersection::None, 0))
     }
 }
