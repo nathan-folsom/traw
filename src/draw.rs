@@ -46,17 +46,8 @@ impl Renderer {
         let (cursor_x, cursor_y) = cursor::position()?;
         let points = shape.draw()?;
 
-        for point in points {
-            let current_char = self.state[point.0 as usize][point.1 as usize];
-
-            if current_char != point.2 {
-                queue!(
-                    stdout(),
-                    cursor::MoveTo(point.0 as u16, point.1 as u16),
-                    Print(point.2)
-                )?;
-                self.state[point.0 as usize][point.1 as usize] = point.2;
-            }
+        for (x, y, c) in points {
+            self.draw_at(x, y, c)?;
         }
 
         queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
@@ -78,11 +69,14 @@ impl Renderer {
     }
 
     pub fn clear(&mut self, shape: &impl Clear) -> std::io::Result<()> {
+        let (cursor_x, cursor_y) = cursor::position()?;
         let points = shape.clear()?;
 
         for (x, y) in points {
             self.draw_at(x, y, ' ')?;
         }
+
+        queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
 
         Ok(())
     }
@@ -91,12 +85,8 @@ impl Renderer {
         let current_char = self.state[x as usize][y as usize];
 
         if current_char != c {
-            let current_char = self.state[x as usize][y as usize];
-
-            if current_char != c {
-                queue!(stdout(), cursor::MoveTo(x as u16, y as u16), Print(c))?;
-                self.state[x as usize][y as usize] = c;
-            }
+            queue!(stdout(), cursor::MoveTo(x as u16, y as u16), Print(c))?;
+            self.state[x as usize][y as usize] = c;
         }
 
         Ok(())

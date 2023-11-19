@@ -146,7 +146,7 @@ impl Clear for Rectangle {
         let mut points = vec![];
         for x in 0..self.width {
             for y in 0..self.height {
-                points.push((x, y))
+                points.push((x + self.x, y + self.y))
             }
         }
         Ok(points)
@@ -164,4 +164,27 @@ pub enum RectangleIntersection {
     None,
     Edge,
     Inner,
+}
+
+#[cfg(test)]
+mod test {
+    use crate::draw::Clear;
+
+    use super::Rectangle;
+
+    #[test]
+    fn should_clear() {
+        let rect = Rectangle {
+            x: 5,
+            y: 5,
+            width: 2,
+            height: 2,
+            shrink: super::Shrink::None,
+            text: vec![],
+        };
+        let clear = rect.clear().unwrap();
+        let expected_clear = vec![(5, 5), (5, 6), (6, 5), (6, 6)];
+        assert_eq!(expected_clear.len(), clear.len());
+        assert_eq!(clear, expected_clear);
+    }
 }
