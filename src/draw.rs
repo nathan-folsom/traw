@@ -5,9 +5,6 @@ use crossterm::{cursor, queue, style::Print};
 pub trait Draw {
     fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>>;
     fn get_intersection(&self) -> std::io::Result<Intersection>;
-}
-
-pub trait Clear {
     fn clear(&self) -> std::io::Result<Vec<(i32, i32)>>;
 }
 
@@ -49,7 +46,7 @@ impl Renderer {
         }
     }
 
-    pub fn render(&mut self, shape: &impl Draw) -> std::io::Result<()> {
+    pub fn render(&mut self, shape: &dyn Draw) -> std::io::Result<()> {
         let (cursor_x, cursor_y) = cursor::position()?;
         let points = shape.draw()?;
 
@@ -75,7 +72,7 @@ impl Renderer {
         Ok(())
     }
 
-    pub fn clear(&mut self, shape: &impl Clear) -> std::io::Result<()> {
+    pub fn clear(&mut self, shape: &dyn Draw) -> std::io::Result<()> {
         let (cursor_x, cursor_y) = cursor::position()?;
         let points = shape.clear()?;
 

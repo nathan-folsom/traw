@@ -5,7 +5,7 @@ use crate::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
-    draw::{Clear, Draw, Intersection},
+    draw::{Draw, Intersection},
 };
 
 #[derive(Debug)]
@@ -139,9 +139,7 @@ impl Draw for Rectangle {
 
         Ok(Intersection::Inner)
     }
-}
 
-impl Clear for Rectangle {
     fn clear(&self) -> std::io::Result<Vec<(i32, i32)>> {
         let mut points = vec![];
         for x in 0..self.width {
@@ -162,7 +160,7 @@ enum Shrink {
 
 #[cfg(test)]
 mod test {
-    use crate::draw::Clear;
+    use crate::draw::Draw;
 
     use super::Rectangle;
 

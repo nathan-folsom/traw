@@ -8,7 +8,7 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
-use draw::{Clear, Intersection};
+use draw::Intersection;
 use mode::Mode;
 use rectangle::Rectangle;
 use state::State;
@@ -79,8 +79,8 @@ fn main() -> std::io::Result<()> {
                                     let (intersection, i) = state.get_cursor_intersection()?;
                                     match intersection {
                                         Intersection::Edge | Intersection::Inner => {
-                                            state.renderer.clear(&state.rectangles[i])?;
-                                            state.rectangles.remove(i);
+                                            state.renderer.clear(&*state.shapes[i])?;
+                                            state.shapes.remove(i);
                                         }
                                         _ => {}
                                     }
@@ -101,11 +101,11 @@ fn main() -> std::io::Result<()> {
                             state.mode = Mode::Text(rect);
                         }
                         Mode::Text(rect) => {
-                            state.rectangles.push(rect);
+                            state.shapes.push(Box::new(rect));
                             state.mode = Mode::Normal;
                         }
                         Mode::DrawArrow(arrow) => {
-                            state.arrows.push(arrow);
+                            state.shapes.push(Box::new(arrow));
                             state.mode = Mode::Normal;
                         }
                         _ => {}
@@ -118,6 +118,9 @@ fn main() -> std::io::Result<()> {
 
         state.status_bar.update(&state.mode)?;
         state.renderer.render_sticky(&state.status_bar)?;
+        for shape in &state.shapes {
+            state.renderer.render(&**shape)?;
+        }
 
         match &mut state.mode {
             Mode::Normal => {}

@@ -58,6 +58,10 @@ impl Draw for Arrow {
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
         Ok(Intersection::None)
     }
+
+    fn clear(&self) -> std::io::Result<Vec<(i32, i32)>> {
+        Ok(vec![])
+    }
 }
 
 fn get_char(prev: &(i32, i32), current: &(i32, i32), next: &(i32, i32)) -> char {

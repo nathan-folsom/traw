@@ -1,16 +1,12 @@
 use crossterm::terminal;
 
 use crate::{
-    arrow::Arrow,
     draw::{Draw, Intersection, Renderer},
     mode::Mode,
-    rectangle::Rectangle,
     status_bar::StatusBar,
 };
 
 pub struct State {
-    pub rectangles: Vec<Rectangle>,
-    pub arrows: Vec<Arrow>,
     pub shapes: Vec<Box<dyn Draw>>,
     pub renderer: Renderer,
     pub mode: Mode,
@@ -22,8 +18,6 @@ impl State {
         let (width, height) = terminal::size()?;
 
         Ok(Self {
-            rectangles: vec![],
-            arrows: vec![],
             shapes: vec![],
             renderer: Renderer::new(width, height),
             mode: Mode::Normal,
@@ -33,7 +27,7 @@ impl State {
 
     pub fn get_cursor_intersection(&self) -> std::io::Result<(Intersection, usize)> {
         for i in 0..self.shapes.len() {
-            let shape = &self.rectangles[i];
+            let shape = &self.shapes[i];
             match shape.get_intersection() {
                 Ok(Intersection::None) => {}
                 Ok(intersection_type) => {
