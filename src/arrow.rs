@@ -2,7 +2,7 @@ use crossterm::cursor;
 
 use crate::{
     characters::{CORNER_1, CORNER_2, CORNER_3, CORNER_4, HORIZONTAL_BAR, VERTICAL_BAR},
-    draw::Draw,
+    draw::{Draw, Intersection},
 };
 
 pub struct Arrow {
@@ -53,6 +53,10 @@ impl Draw for Arrow {
         }
 
         Ok(points)
+    }
+
+    fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
+        Ok(Intersection::None)
     }
 }
 

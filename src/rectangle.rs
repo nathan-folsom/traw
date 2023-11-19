@@ -5,7 +5,7 @@ use crate::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
-    draw::{Clear, Draw},
+    draw::{Clear, Draw, Intersection},
 };
 
 #[derive(Debug)]
@@ -50,39 +50,6 @@ impl Rectangle {
 
     pub fn on_char(&mut self, key: char) {
         self.text.push(key);
-    }
-
-    pub fn get_intersection(&self) -> std::io::Result<RectangleIntersection> {
-        let (cursor_x, cursor_y) = cursor::position()?;
-
-        let c_x = cursor_x as i32;
-        let c_y = cursor_y as i32;
-        let y_0 = self.y;
-        let x_0 = self.x;
-        let y_1 = self.y + self.height - 1;
-        let x_1 = self.x + self.width - 1;
-
-        let cursor_x_in_rectangle = c_x >= x_0 && c_x <= x_1;
-        let cursor_y_in_rectangle = c_y >= y_0 && c_y <= y_1;
-
-        if !cursor_x_in_rectangle || !cursor_y_in_rectangle {
-            return Ok(RectangleIntersection::None);
-        }
-
-        let cursor_on_top_border = c_y == y_0;
-        let cursor_on_bottom_border = c_y == y_1;
-        let cursor_on_left_border = c_x == x_0;
-        let cursor_on_right_border = c_x == x_1;
-
-        if cursor_on_top_border
-            || cursor_on_right_border
-            || cursor_on_bottom_border
-            || cursor_on_left_border
-        {
-            return Ok(RectangleIntersection::Edge);
-        }
-
-        Ok(RectangleIntersection::Inner)
     }
 }
 
@@ -139,6 +106,39 @@ impl Draw for Rectangle {
 
         Ok(points)
     }
+
+    fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
+        let (cursor_x, cursor_y) = cursor::position()?;
+
+        let c_x = cursor_x as i32;
+        let c_y = cursor_y as i32;
+        let y_0 = self.y;
+        let x_0 = self.x;
+        let y_1 = self.y + self.height - 1;
+        let x_1 = self.x + self.width - 1;
+
+        let cursor_x_in_rectangle = c_x >= x_0 && c_x <= x_1;
+        let cursor_y_in_rectangle = c_y >= y_0 && c_y <= y_1;
+
+        if !cursor_x_in_rectangle || !cursor_y_in_rectangle {
+            return Ok(Intersection::None);
+        }
+
+        let cursor_on_top_border = c_y == y_0;
+        let cursor_on_bottom_border = c_y == y_1;
+        let cursor_on_left_border = c_x == x_0;
+        let cursor_on_right_border = c_x == x_1;
+
+        if cursor_on_top_border
+            || cursor_on_right_border
+            || cursor_on_bottom_border
+            || cursor_on_left_border
+        {
+            return Ok(Intersection::Edge);
+        }
+
+        Ok(Intersection::Inner)
+    }
 }
 
 impl Clear for Rectangle {
@@ -158,12 +158,6 @@ enum Shrink {
     X,
     Y,
     None,
-}
-
-pub enum RectangleIntersection {
-    None,
-    Edge,
-    Inner,
 }
 
 #[cfg(test)]

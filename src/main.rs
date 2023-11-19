@@ -8,9 +8,9 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
-use draw::Clear;
+use draw::{Clear, Intersection};
 use mode::Mode;
-use rectangle::{Rectangle, RectangleIntersection};
+use rectangle::Rectangle;
 use state::State;
 
 mod arrow;
@@ -55,18 +55,18 @@ fn main() -> std::io::Result<()> {
                                 }
                                 Mode::Normal => {
                                     let (x, y) = cursor::position()?;
-                                    let (intersection, i) = state.get_rectangle_intersection()?;
+                                    let (intersection, i) = state.get_cursor_intersection()?;
 
                                     match intersection {
-                                        RectangleIntersection::None => {
+                                        Intersection::None => {
                                             state.mode = Mode::DrawRectangle(Rectangle::new_at(
                                                 x as i32, y as i32,
                                             ));
                                         }
-                                        RectangleIntersection::Edge => {
+                                        Intersection::Edge => {
                                             state.mode = Mode::DrawArrow(Arrow { points: vec![] });
                                         }
-                                        RectangleIntersection::Inner => {
+                                        Intersection::Inner => {
                                             todo!();
                                             // state.mode = Mode::Text(());
                                         }
@@ -76,10 +76,9 @@ fn main() -> std::io::Result<()> {
                             },
                             'x' => match state.mode {
                                 Mode::Normal => {
-                                    let (intersection, i) = state.get_rectangle_intersection()?;
+                                    let (intersection, i) = state.get_cursor_intersection()?;
                                     match intersection {
-                                        RectangleIntersection::Edge
-                                        | RectangleIntersection::Inner => {
+                                        Intersection::Edge | Intersection::Inner => {
                                             state.renderer.clear(&state.rectangles[i])?;
                                             state.rectangles.remove(i);
                                         }

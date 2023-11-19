@@ -4,6 +4,7 @@ use crossterm::{cursor, queue, style::Print};
 
 pub trait Draw {
     fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>>;
+    fn get_intersection(&self) -> std::io::Result<Intersection>;
 }
 
 pub trait Clear {
@@ -12,6 +13,12 @@ pub trait Clear {
 
 pub trait DrawSticky {
     fn draw(&self) -> std::io::Result<Vec<(u16, u16, char)>>;
+}
+
+pub enum Intersection {
+    None,
+    Edge,
+    Inner,
 }
 
 pub struct Renderer {
