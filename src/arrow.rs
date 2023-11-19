@@ -7,19 +7,35 @@ use crate::{
 
 pub struct Arrow {
     pub points: Vec<(i32, i32)>,
+    clear: Option<(i32, i32)>,
 }
 
 impl Arrow {
-    pub fn update(&mut self) -> std::io::Result<()> {
-        let (cursor_x, cursor_y) = cursor::position()?;
-        self.points.push((cursor_x as i32, cursor_y as i32));
-        Ok(())
+    pub fn init() -> Self {
+        Self {
+            points: vec![],
+            clear: None,
+        }
+    }
+
+    pub fn update(&mut self, (cursor_x, cursor_y): (u16, u16)) {
+        if self.points.len() > 1
+            && self.points[self.points.len() - 2] == (cursor_x as i32, cursor_y as i32)
+        {
+            self.clear = self.points.pop();
+        } else {
+            self.points.push((cursor_x as i32, cursor_y as i32));
+        }
     }
 }
 
 impl Draw for Arrow {
     fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>> {
         let mut points = vec![];
+
+        if let Some((x, y)) = self.clear {
+            points.push((x, y, ' '));
+        }
 
         for i in 0..self.points.len() {
             let is_first_point = i == 0;
@@ -164,11 +180,19 @@ mod test {
 
     #[test]
     fn should_not_render_first_position() {
-        let arrow = Arrow {
-            points: vec![(0, 0), (1, 0), (2, 0)],
-        };
+        let mut arrow = Arrow::init();
+        arrow.points = vec![(0, 0), (1, 0), (2, 0)];
 
         let render = arrow.draw().unwrap();
         assert_eq!(render.len(), arrow.points.len() - 1);
+    }
+
+    #[test]
+    fn should_remove_point_when_revisiting_previous_point() {
+        let mut arrow = Arrow::init();
+        arrow.points = vec![(0, 0), (1, 0), (2, 0)];
+        arrow.update((1, 0));
+        let expected = vec![(0, 0), (1, 0)];
+        assert_eq!(arrow.points, expected);
     }
 }

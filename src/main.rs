@@ -63,7 +63,7 @@ fn main() -> std::io::Result<()> {
                                             ));
                                         }
                                         Intersection::Edge => {
-                                            state.mode = Mode::DrawArrow(Arrow { points: vec![] });
+                                            state.mode = Mode::DrawArrow(Arrow::init());
                                         }
                                         Intersection::Inner => {
                                             todo!();
@@ -133,7 +133,7 @@ fn main() -> std::io::Result<()> {
                 state.renderer.render(rect)?;
             }
             Mode::DrawArrow(arrow) => {
-                arrow.update()?;
+                arrow.update(cursor::position()?);
                 state.renderer.render(arrow)?;
             }
         }
