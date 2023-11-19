@@ -75,7 +75,7 @@ impl Draw for Arrow {
         let (c_x, c_y) = cursor::position()?;
 
         for (x, y, _) in self.draw()? {
-            if x as u16 == c_x || y as u16 == c_y {
+            if x as u16 == c_x && y as u16 == c_y {
                 return Ok(Intersection::Edge);
             }
         }
