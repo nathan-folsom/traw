@@ -44,8 +44,7 @@ fn main() -> std::io::Result<()> {
                 match key_event.code {
                     KeyCode::Char(key) => match &mut state.mode {
                         Mode::Text(rect) => {
-                            rect.on_char(key);
-                            queue!(stdout(), cursor::MoveRight(1))?;
+                            rect.on_char(key)?;
                         }
                         Mode::Normal | Mode::DrawRectangle(_) => match key {
                             'q' => break,
@@ -103,6 +102,12 @@ fn main() -> std::io::Result<()> {
                         Mode::DrawArrow(arrow) => {
                             state.shapes.push(Box::new(arrow));
                             state.mode = Mode::Normal;
+                        }
+                        _ => {}
+                    },
+                    KeyCode::Backspace => match &mut state.mode {
+                        Mode::Text(rect) => {
+                            rect.on_backspace()?;
                         }
                         _ => {}
                     },

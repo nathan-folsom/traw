@@ -1,4 +1,9 @@
-use crossterm::cursor;
+use std::io::stdout;
+
+use crossterm::{
+    cursor::{self, MoveLeft},
+    queue,
+};
 
 use crate::{
     characters::{
@@ -48,8 +53,16 @@ impl Rectangle {
         Ok(())
     }
 
-    pub fn on_char(&mut self, key: char) {
+    pub fn on_char(&mut self, key: char) -> std::io::Result<()> {
+        queue!(stdout(), cursor::MoveRight(1))?;
         self.text.push(key);
+        Ok(())
+    }
+
+    pub fn on_backspace(&mut self) -> std::io::Result<()> {
+        queue!(stdout(), MoveLeft(1))?;
+        self.text.pop();
+        Ok(())
     }
 }
 
