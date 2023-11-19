@@ -11,6 +11,7 @@ use crossterm::{
 use draw::Intersection;
 use mode::Mode;
 use rectangle::Rectangle;
+use shape::Shape;
 use state::State;
 
 mod arrow;
@@ -18,6 +19,7 @@ mod characters;
 mod draw;
 mod mode;
 mod rectangle;
+mod shape;
 mod state;
 mod status_bar;
 
@@ -54,7 +56,7 @@ fn main() -> std::io::Result<()> {
                                 }
                                 Mode::Normal => {
                                     let (x, y) = cursor::position()?;
-                                    let (intersection, _) = state.get_cursor_intersection()?;
+                                    let (intersection, i) = state.get_cursor_intersection()?;
 
                                     match intersection {
                                         Intersection::None => {
@@ -66,8 +68,15 @@ fn main() -> std::io::Result<()> {
                                             state.mode = Mode::DrawArrow(Arrow::init());
                                         }
                                         Intersection::Inner => {
-                                            todo!();
-                                            // state.mode = Mode::Text(());
+                                            let edited = state.shapes.remove(i);
+                                            match edited {
+                                                Shape::Box(rectangle) => {
+                                                    state.mode = Mode::Text(rectangle);
+                                                }
+                                                Shape::Line(arrow) => {
+                                                    state.mode = Mode::DrawArrow(arrow);
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -78,7 +87,7 @@ fn main() -> std::io::Result<()> {
                                     let (intersection, i) = state.get_cursor_intersection()?;
                                     match intersection {
                                         Intersection::Edge | Intersection::Inner => {
-                                            state.renderer.clear(&*state.shapes[i])?;
+                                            state.renderer.clear(&state.shapes[i])?;
                                             state.shapes.remove(i);
                                         }
                                         _ => {}
@@ -96,11 +105,11 @@ fn main() -> std::io::Result<()> {
                             state.mode = get_text_mode(rect)?;
                         }
                         Mode::Text(rect) => {
-                            state.shapes.push(Box::new(rect));
+                            state.shapes.push(Shape::Box(rect));
                             state.mode = Mode::Normal;
                         }
                         Mode::DrawArrow(arrow) => {
-                            state.shapes.push(Box::new(arrow));
+                            state.shapes.push(Shape::Line(arrow));
                             state.mode = Mode::Normal;
                         }
                         _ => {}
@@ -120,7 +129,7 @@ fn main() -> std::io::Result<()> {
         state.status_bar.update(&state.mode)?;
         state.renderer.render_sticky(&state.status_bar)?;
         for shape in &state.shapes {
-            state.renderer.render(&**shape)?;
+            state.renderer.render(shape)?;
         }
 
         match &mut state.mode {

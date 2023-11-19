@@ -46,7 +46,7 @@ impl Renderer {
         }
     }
 
-    pub fn render(&mut self, shape: &dyn Draw) -> std::io::Result<()> {
+    pub fn render(&mut self, shape: &impl Draw) -> std::io::Result<()> {
         let (cursor_x, cursor_y) = cursor::position()?;
         let points = shape.draw()?;
 
@@ -72,7 +72,7 @@ impl Renderer {
         Ok(())
     }
 
-    pub fn clear(&mut self, shape: &dyn Draw) -> std::io::Result<()> {
+    pub fn clear(&mut self, shape: &impl Draw) -> std::io::Result<()> {
         let (cursor_x, cursor_y) = cursor::position()?;
         let points = shape.clear()?;
 

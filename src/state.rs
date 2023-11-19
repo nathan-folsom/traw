@@ -3,11 +3,12 @@ use crossterm::terminal;
 use crate::{
     draw::{Draw, Intersection, Renderer},
     mode::Mode,
+    shape::Shape,
     status_bar::StatusBar,
 };
 
 pub struct State {
-    pub shapes: Vec<Box<dyn Draw>>,
+    pub shapes: Vec<Shape>,
     pub renderer: Renderer,
     pub mode: Mode,
     pub status_bar: StatusBar,
