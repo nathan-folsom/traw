@@ -54,15 +54,29 @@ impl Rectangle {
     }
 
     pub fn on_char(&mut self, key: char) -> std::io::Result<()> {
-        queue!(stdout(), cursor::MoveRight(1))?;
         self.text.push(key);
+        let (next_x, next_y) = self.get_inner_cursor_position();
+        queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
         Ok(())
     }
 
     pub fn on_backspace(&mut self) -> std::io::Result<()> {
-        queue!(stdout(), MoveLeft(1))?;
         self.text.pop();
+        let (next_x, next_y) = self.get_inner_cursor_position();
+        queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
         Ok(())
+    }
+
+    pub fn get_inner_cursor_position(&self) -> (i32, i32) {
+        if self.width < 3 || self.height < 3 {
+            return (self.x, self.y);
+        }
+        let text_width = self.width - 2;
+        let col = self.text.len() as i32 % text_width;
+        let row = self.text.len() as i32 / text_width;
+        let cursor_x = self.x + 1 + col;
+        let cursor_y = self.y + 1 + row;
+        (cursor_x, cursor_y)
     }
 }
 
@@ -191,5 +205,20 @@ mod test {
         let expected_clear = vec![(5, 5), (5, 6), (6, 5), (6, 6)];
         assert_eq!(expected_clear.len(), clear.len());
         assert_eq!(clear, expected_clear);
+    }
+
+    #[test]
+    fn should_get_cursor_position_when_editing_text() {
+        let rect = Rectangle {
+            x: 5,
+            y: 5,
+            width: 4,
+            height: 4,
+            shrink: super::Shrink::None,
+            text: vec!['0', '1', '2'],
+        };
+        let pos = rect.get_inner_cursor_position();
+        let expected = (7, 7);
+        assert_eq!(pos, expected);
     }
 }

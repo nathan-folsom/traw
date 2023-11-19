@@ -71,7 +71,7 @@ fn main() -> std::io::Result<()> {
                                             let edited = state.shapes.remove(i);
                                             match edited {
                                                 Shape::Box(rectangle) => {
-                                                    state.mode = Mode::Text(rectangle);
+                                                    state.mode = get_text_mode(rectangle)?;
                                                 }
                                                 Shape::Line(arrow) => {
                                                     state.mode = Mode::DrawArrow(arrow);
@@ -200,10 +200,8 @@ fn handle_motions(event: KeyEvent) -> std::io::Result<()> {
 }
 
 fn get_text_mode(rect: Rectangle) -> std::io::Result<Mode> {
-    queue!(
-        stdout(),
-        cursor::MoveTo(rect.x as u16 + 1, rect.y as u16 + 1)
-    )?;
+    let (next_x, next_y) = rect.get_inner_cursor_position();
+    queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
 
     Ok(Mode::Text(rect))
 }
