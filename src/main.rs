@@ -51,11 +51,11 @@ fn main() -> std::io::Result<()> {
                             'q' => break,
                             'i' => match state.mode {
                                 Mode::DrawRectangle(rect) => {
-                                    state.mode = Mode::Text(rect);
+                                    state.mode = get_text_mode(rect)?;
                                 }
                                 Mode::Normal => {
                                     let (x, y) = cursor::position()?;
-                                    let (intersection, i) = state.get_cursor_intersection()?;
+                                    let (intersection, _) = state.get_cursor_intersection()?;
 
                                     match intersection {
                                         Intersection::None => {
@@ -94,11 +94,7 @@ fn main() -> std::io::Result<()> {
 
                     KeyCode::Enter => match state.mode {
                         Mode::DrawRectangle(rect) => {
-                            queue!(
-                                stdout(),
-                                cursor::MoveTo(rect.x as u16 + 1, rect.y as u16 + 1)
-                            )?;
-                            state.mode = Mode::Text(rect);
+                            state.mode = get_text_mode(rect)?;
                         }
                         Mode::Text(rect) => {
                             state.shapes.push(Box::new(rect));
@@ -187,4 +183,13 @@ fn handle_motions(event: KeyEvent) -> std::io::Result<()> {
     }
 
     Ok(())
+}
+
+fn get_text_mode(rect: Rectangle) -> std::io::Result<Mode> {
+    queue!(
+        stdout(),
+        cursor::MoveTo(rect.x as u16 + 1, rect.y as u16 + 1)
+    )?;
+
+    Ok(Mode::Text(rect))
 }
