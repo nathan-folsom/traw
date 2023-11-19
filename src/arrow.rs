@@ -56,11 +56,19 @@ impl Draw for Arrow {
     }
 
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
+        let (c_x, c_y) = cursor::position()?;
+
+        for (x, y, _) in self.draw()? {
+            if x as u16 == c_x || y as u16 == c_y {
+                return Ok(Intersection::Edge);
+            }
+        }
+
         Ok(Intersection::None)
     }
 
     fn clear(&self) -> std::io::Result<Vec<(i32, i32)>> {
-        Ok(vec![])
+        Ok(self.points.clone())
     }
 }
 
