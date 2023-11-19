@@ -10,4 +10,5 @@ Terminal ui with vim-inspired keybindings for drawing system diagrams
   - Start drawing an arrow when cursor is on a box boundary
   - Edit box text content when cursor is inside a box
 - 'hjkl' (normal mode, draw mode) - Move around
+- 'x' (normal mode) - Delete shape under cursor
 
