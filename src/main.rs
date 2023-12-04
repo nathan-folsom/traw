@@ -34,8 +34,11 @@ fn main() -> std::io::Result<()> {
     let mut status_bar = StatusBar::default();
     let path_arg = std::env::args().nth(1);
 
+    let mut file_name = "unnamed.traw".to_string();
+
     if let Some(path) = path_arg {
-        state = load(path)?;
+        file_name = path;
+        state = load(&file_name)?;
         status_bar.update(&state.mode)?;
         renderer.render_sticky(&status_bar)?;
         for shape in &state.shapes {
@@ -67,7 +70,7 @@ fn main() -> std::io::Result<()> {
                         }
                         Mode::Normal | Mode::DrawRectangle(_) => match key {
                             'q' => break,
-                            's' => save(&state)?,
+                            's' => save(&state, &file_name)?,
                             'i' => match state.mode {
                                 Mode::DrawRectangle(rect) => {
                                     state.mode = get_text_mode(rect)?;
