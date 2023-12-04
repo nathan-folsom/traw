@@ -10,9 +10,8 @@ use crossterm::{
 };
 use draw::{Intersection, Renderer};
 use mode::Mode;
+use persistence::{load, save};
 use rectangle::Rectangle;
-use serde::{Deserialize, Serialize};
-use serde_json::Error;
 use shape::Shape;
 use state::State;
 use status_bar::StatusBar;
@@ -21,6 +20,7 @@ mod arrow;
 mod characters;
 mod draw;
 mod mode;
+mod persistence;
 mod rectangle;
 mod shape;
 mod state;
@@ -32,6 +32,17 @@ fn main() -> std::io::Result<()> {
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
     let mut status_bar = StatusBar::default();
+    let path_arg = std::env::args().nth(1);
+
+    if let Some(path) = path_arg {
+        state = load(path)?;
+        status_bar.update(&state.mode)?;
+        renderer.render_sticky(&status_bar)?;
+        for shape in &state.shapes {
+            renderer.render(shape)?;
+        }
+        stdout().flush()?;
+    }
 
     loop {
         match event::read()? {
@@ -211,33 +222,4 @@ fn get_text_mode(rect: Rectangle) -> std::io::Result<Mode> {
     queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
 
     Ok(Mode::Text(rect))
-}
-
-#[derive(Serialize, Deserialize)]
-struct TrawFile {
-    version: FileVersion,
-    data: String,
-}
-
-const CURRENT_VERSION: FileVersion = FileVersion::V1;
-
-impl TrawFile {
-    pub fn new(data: String) -> Self {
-        TrawFile {
-            version: CURRENT_VERSION,
-            data,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-enum FileVersion {
-    V1,
-}
-
-fn save(state: &State) -> Result<(), Error> {
-    let data = serde_json::to_string(state)?;
-    let traw_file = TrawFile::new(data);
-    let _ = std::fs::write("unnamed.traw", serde_json::to_string(&traw_file)?);
-    Ok(())
 }
