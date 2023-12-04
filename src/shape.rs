@@ -1,5 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{arrow::Arrow, draw::Draw, rectangle::Rectangle};
 
+#[derive(Serialize, Deserialize)]
 pub enum Shape {
     Box(Rectangle),
     Line(Arrow),

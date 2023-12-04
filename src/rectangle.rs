@@ -1,7 +1,8 @@
+use serde::{Deserialize, Serialize};
 use std::io::stdout;
 
 use crossterm::{
-    cursor::{self, MoveLeft},
+    cursor::{self},
     queue,
 };
 
@@ -13,7 +14,7 @@ use crate::{
     draw::{Draw, Intersection},
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Rectangle {
     pub x: i32,
     pub y: i32,
@@ -178,7 +179,7 @@ impl Draw for Rectangle {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 enum Shrink {
     X,
     Y,

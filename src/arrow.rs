@@ -1,10 +1,12 @@
 use crossterm::cursor;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     characters::{CORNER_1, CORNER_2, CORNER_3, CORNER_4, HORIZONTAL_BAR, VERTICAL_BAR},
     draw::{Draw, Intersection},
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct Arrow {
     pub points: Vec<(i32, i32)>,
     clear: Option<(i32, i32)>,

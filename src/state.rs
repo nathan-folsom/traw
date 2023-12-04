@@ -1,29 +1,23 @@
-use crossterm::terminal;
+use serde::{Deserialize, Serialize};
 
 use crate::{
-    draw::{Draw, Intersection, Renderer},
+    draw::{Draw, Intersection},
     mode::Mode,
     shape::Shape,
-    status_bar::StatusBar,
 };
 
+#[derive(Serialize, Deserialize)]
 pub struct State {
     pub shapes: Vec<Shape>,
-    pub renderer: Renderer,
     pub mode: Mode,
-    pub status_bar: StatusBar,
 }
 
 impl State {
-    pub fn init() -> std::io::Result<Self> {
-        let (width, height) = terminal::size()?;
-
-        Ok(Self {
+    pub fn init() -> Self {
+        Self {
             shapes: vec![],
-            renderer: Renderer::new(width, height),
             mode: Mode::Normal,
-            status_bar: StatusBar::default(),
-        })
+        }
     }
 
     pub fn get_cursor_intersection(&self) -> std::io::Result<(Intersection, usize)> {

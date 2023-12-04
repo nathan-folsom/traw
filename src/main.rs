@@ -8,11 +8,12 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
-use draw::Intersection;
+use draw::{Intersection, Renderer};
 use mode::Mode;
 use rectangle::Rectangle;
 use shape::Shape;
 use state::State;
+use status_bar::StatusBar;
 
 mod arrow;
 mod characters;
@@ -25,7 +26,10 @@ mod status_bar;
 
 fn main() -> std::io::Result<()> {
     let _ = init()?;
-    let mut state = State::init()?;
+    let mut state = State::init();
+    let (width, height) = terminal::size()?;
+    let mut renderer = Renderer::new(width, height);
+    let mut status_bar = StatusBar::default();
 
     loop {
         match event::read()? {
@@ -87,7 +91,7 @@ fn main() -> std::io::Result<()> {
                                     let (intersection, i) = state.get_cursor_intersection()?;
                                     match intersection {
                                         Intersection::Edge | Intersection::Inner => {
-                                            state.renderer.clear(&state.shapes[i])?;
+                                            renderer.clear(&state.shapes[i])?;
                                             state.shapes.remove(i);
                                         }
                                         _ => {}
@@ -126,24 +130,24 @@ fn main() -> std::io::Result<()> {
             _ => {}
         }
 
-        state.status_bar.update(&state.mode)?;
-        state.renderer.render_sticky(&state.status_bar)?;
+        status_bar.update(&state.mode)?;
+        renderer.render_sticky(&status_bar)?;
         for shape in &state.shapes {
-            state.renderer.render(shape)?;
+            renderer.render(shape)?;
         }
 
         match &mut state.mode {
             Mode::Normal => {}
             Mode::DrawRectangle(rect) => {
                 rect.update()?;
-                state.renderer.render(rect)?;
+                renderer.render(rect)?;
             }
             Mode::Text(rect) => {
-                state.renderer.render(rect)?;
+                renderer.render(rect)?;
             }
             Mode::DrawArrow(arrow) => {
                 arrow.update(cursor::position()?);
-                state.renderer.render(arrow)?;
+                renderer.render(arrow)?;
             }
         }
 
