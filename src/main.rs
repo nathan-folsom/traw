@@ -11,6 +11,8 @@ use crossterm::{
 use draw::{Intersection, Renderer};
 use mode::Mode;
 use rectangle::Rectangle;
+use serde::{Deserialize, Serialize};
+use serde_json::Error;
 use shape::Shape;
 use state::State;
 use status_bar::StatusBar;
@@ -54,6 +56,7 @@ fn main() -> std::io::Result<()> {
                         }
                         Mode::Normal | Mode::DrawRectangle(_) => match key {
                             'q' => break,
+                            's' => save(&state)?,
                             'i' => match state.mode {
                                 Mode::DrawRectangle(rect) => {
                                     state.mode = get_text_mode(rect)?;
@@ -208,4 +211,33 @@ fn get_text_mode(rect: Rectangle) -> std::io::Result<Mode> {
     queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
 
     Ok(Mode::Text(rect))
+}
+
+#[derive(Serialize, Deserialize)]
+struct TrawFile {
+    version: FileVersion,
+    data: String,
+}
+
+const CURRENT_VERSION: FileVersion = FileVersion::V1;
+
+impl TrawFile {
+    pub fn new(data: String) -> Self {
+        TrawFile {
+            version: CURRENT_VERSION,
+            data,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+enum FileVersion {
+    V1,
+}
+
+fn save(state: &State) -> Result<(), Error> {
+    let data = serde_json::to_string(state)?;
+    let traw_file = TrawFile::new(data);
+    let _ = std::fs::write("unnamed.traw", serde_json::to_string(&traw_file)?);
+    Ok(())
 }
