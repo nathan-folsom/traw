@@ -11,4 +11,5 @@ Terminal ui with vim-inspired keybindings for drawing system diagrams
   - Edit box text content when cursor is inside a box
 - 'hjkl' (normal mode, draw mode) - Move around
 - 'x' (normal mode) - Delete shape under cursor
+- 's' (normal mode) - Save current file
 
