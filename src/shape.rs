@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{arrow::Arrow, draw::Draw, rectangle::Rectangle};
+use crate::{
+    arrow::Arrow,
+    draw::{Draw, Point},
+    rectangle::Rectangle,
+};
 
 #[derive(Serialize, Deserialize)]
 pub enum Shape {
@@ -9,7 +13,7 @@ pub enum Shape {
 }
 
 impl Draw for Shape {
-    fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>> {
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
         match self {
             Shape::Line(shape) => shape.draw(),
             Shape::Box(shape) => shape.draw(),

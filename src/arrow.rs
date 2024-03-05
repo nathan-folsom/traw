@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     characters::{CORNER_1, CORNER_2, CORNER_3, CORNER_4, HORIZONTAL_BAR, VERTICAL_BAR},
-    draw::{Draw, Intersection},
+    draw::{Color, Draw, Intersection, Point},
 };
 
 #[derive(Serialize, Deserialize)]
@@ -32,11 +32,20 @@ impl Arrow {
 }
 
 impl Draw for Arrow {
-    fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>> {
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
         let mut points = vec![];
 
+        let foreground = Color::Border;
+        let background = Color::BorderBackground;
+
         if let Some((x, y)) = self.clear {
-            points.push((x, y, ' '));
+            points.push(Point {
+                x,
+                y,
+                character: ' ',
+                foreground,
+                background,
+            });
         }
 
         for i in 0..self.points.len() {
@@ -52,22 +61,26 @@ impl Draw for Arrow {
 
             if is_last_point {
                 let is_vertical = point.1 != prev.1 && point.0 == prev.0;
-                points.push((
-                    point.0,
-                    point.1,
-                    match is_vertical {
+                points.push(Point {
+                    x: point.0,
+                    y: point.1,
+                    character: match is_vertical {
                         true => VERTICAL_BAR,
                         false => HORIZONTAL_BAR,
                     },
-                ));
+                    foreground,
+                    background,
+                });
                 continue;
             }
 
-            points.push((
-                point.0,
-                point.1,
-                get_char(&prev, &point, &self.points[i + 1]),
-            ));
+            points.push(Point {
+                x: point.0,
+                y: point.1,
+                character: get_char(&prev, &point, &self.points[i + 1]),
+                foreground,
+                background,
+            });
         }
 
         Ok(points)
@@ -76,7 +89,7 @@ impl Draw for Arrow {
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
         let (c_x, c_y) = cursor::position()?;
 
-        for (x, y, _) in self.draw()? {
+        for Point { x, y, .. } in self.draw()? {
             if x as u16 == c_x && y as u16 == c_y {
                 return Ok(Intersection::Edge);
             }

@@ -11,7 +11,7 @@ use crate::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
-    draw::{Draw, Intersection},
+    draw::{Color, Draw, Intersection, Point},
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -82,8 +82,10 @@ impl Rectangle {
 }
 
 impl Draw for Rectangle {
-    fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>> {
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
         let mut points = vec![];
+        let foreground = Color::Border;
+        let background = Color::BorderBackground;
 
         for y in 0..self.height {
             for x in 0..self.width {
@@ -114,19 +116,37 @@ impl Draw for Rectangle {
                     to_draw = VERTICAL_BAR;
                 }
 
-                points.push((self.x + x, self.y + y, to_draw));
+                points.push(Point {
+                    x: self.x + x,
+                    y: self.y + y,
+                    character: to_draw,
+                    foreground,
+                    background,
+                });
             }
         }
 
         match self.shrink {
             Shrink::X => {
                 for y in 0..self.height {
-                    points.push((self.x + self.width, self.y + y, ' '));
+                    points.push(Point {
+                        x: self.x + self.width,
+                        y: self.y + y,
+                        character: ' ',
+                        foreground,
+                        background,
+                    });
                 }
             }
             Shrink::Y => {
                 for x in 0..self.width {
-                    points.push((self.x + x, self.y + self.height, ' '));
+                    points.push(Point {
+                        x: self.x + x,
+                        y: self.y + self.height,
+                        character: ' ',
+                        foreground,
+                        background,
+                    });
                 }
             }
             _ => {}

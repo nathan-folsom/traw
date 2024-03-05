@@ -1,6 +1,9 @@
 use crossterm::{cursor, terminal};
 
-use crate::{draw::DrawSticky, mode::Mode};
+use crate::{
+    draw::{DrawSticky, Point},
+    mode::Mode,
+};
 
 #[derive(Default)]
 pub struct StatusBar {
@@ -38,7 +41,7 @@ impl StatusBar {
 }
 
 impl DrawSticky for StatusBar {
-    fn draw(&self) -> std::io::Result<Vec<(u16, u16, char)>> {
+    fn draw(&self) -> std::io::Result<Vec<Point<u16>>> {
         let (w, h) = terminal::size()?;
         let mut row = vec![];
 
@@ -63,7 +66,13 @@ impl DrawSticky for StatusBar {
                 }
             }
 
-            row.push((x, h - 1, next_char));
+            row.push(Point {
+                x,
+                y: h - 1,
+                character: next_char,
+                foreground: crate::draw::Color::Empty,
+                background: crate::draw::Color::EmptyBackground,
+            });
         }
 
         Ok(row)

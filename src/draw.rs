@@ -1,15 +1,66 @@
 use std::io::stdout;
 
-use crossterm::{cursor, queue, style::Print};
+use crossterm::{
+    cursor, queue,
+    style::{Print, SetBackgroundColor, SetForegroundColor},
+};
+
+#[derive(PartialEq, Eq, Copy, Clone)]
+pub enum Color {
+    Empty,
+    EmptyBackground,
+    Border,
+    BorderBackground,
+    BorderBackgroundHover,
+}
+
+const DEFAULT_COLORS: [(Color, crossterm::style::Color); 3] = [
+    (
+        Color::Border,
+        crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 },
+    ),
+    (
+        Color::BorderBackground,
+        crossterm::style::Color::Rgb { r: 0, g: 0, b: 0 },
+    ),
+    (
+        Color::BorderBackgroundHover,
+        crossterm::style::Color::Rgb {
+            r: 20,
+            g: 20,
+            b: 20,
+        },
+    ),
+];
+
+pub struct Point<T> {
+    pub x: T,
+    pub y: T,
+    pub character: char,
+    pub foreground: Color,
+    pub background: Color,
+}
+
+impl Into<Point<i32>> for Point<u16> {
+    fn into(self) -> Point<i32> {
+        Point {
+            x: self.x as i32,
+            y: self.y as i32,
+            character: self.character,
+            foreground: self.foreground,
+            background: self.background,
+        }
+    }
+}
 
 pub trait Draw {
-    fn draw(&self) -> std::io::Result<Vec<(i32, i32, char)>>;
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>>;
     fn get_intersection(&self) -> std::io::Result<Intersection>;
     fn clear(&self) -> std::io::Result<Vec<(i32, i32)>>;
 }
 
 pub trait DrawSticky {
-    fn draw(&self) -> std::io::Result<Vec<(u16, u16, char)>>;
+    fn draw(&self) -> std::io::Result<Vec<Point<u16>>>;
 }
 
 pub enum Intersection {
@@ -50,8 +101,8 @@ impl Renderer {
         let (cursor_x, cursor_y) = cursor::position()?;
         let points = shape.draw()?;
 
-        for (x, y, c) in points {
-            self.draw_at(x, y, c)?;
+        for point in points {
+            self.draw_at(point)?;
         }
 
         queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
@@ -63,8 +114,8 @@ impl Renderer {
         let (cursor_x, cursor_y) = cursor::position()?;
         let points = shape.draw()?;
 
-        for (x, y, c) in points {
-            self.draw_at(x as i32, y as i32, c)?;
+        for point in points {
+            self.draw_at(point.into())?;
         }
 
         queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
@@ -77,7 +128,13 @@ impl Renderer {
         let points = shape.clear()?;
 
         for (x, y) in points {
-            self.draw_at(x, y, ' ')?;
+            self.draw_at(Point {
+                x,
+                y,
+                character: ' ',
+                foreground: Color::Empty,
+                background: Color::EmptyBackground,
+            })?;
         }
 
         queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
@@ -85,14 +142,43 @@ impl Renderer {
         Ok(())
     }
 
-    fn draw_at(&mut self, x: i32, y: i32, c: char) -> std::io::Result<()> {
+    fn draw_at(&mut self, point: Point<i32>) -> std::io::Result<()> {
+        let Point {
+            x,
+            y,
+            character,
+            foreground,
+            background,
+        } = point;
         let current_char = self.state[x as usize][y as usize];
 
-        if current_char != c {
-            queue!(stdout(), cursor::MoveTo(x as u16, y as u16), Print(c))?;
-            self.state[x as usize][y as usize] = c;
+        if current_char != character {
+            queue!(
+                stdout(),
+                cursor::MoveTo(x as u16, y as u16),
+                SetForegroundColor(get_default_color(foreground, true)),
+                SetBackgroundColor(get_default_color(background, false)),
+                Print(character)
+            )?;
+            self.state[x as usize][y as usize] = character;
         }
 
         Ok(())
+    }
+}
+
+fn get_default_color(color: Color, fg: bool) -> crossterm::style::Color {
+    let default = DEFAULT_COLORS.iter().find(|(c, _)| c == &color);
+
+    if let Some((_, rgb)) = default {
+        *rgb
+    } else if fg {
+        crossterm::style::Color::Rgb {
+            r: 255,
+            g: 255,
+            b: 255,
+        }
+    } else {
+        crossterm::style::Color::Rgb { r: 0, g: 0, b: 0 }
     }
 }
