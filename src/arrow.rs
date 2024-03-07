@@ -6,7 +6,7 @@ use crate::{
     draw::{Color, Draw, Intersection, Point},
 };
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Arrow {
     pub points: Vec<(i32, i32)>,
     clear: Option<(i32, i32)>,

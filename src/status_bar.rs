@@ -68,7 +68,7 @@ impl DrawSticky for StatusBar {
 
             row.push(Point {
                 x,
-                y: h - 1,
+                y: h - 11,
                 character: next_char,
                 foreground: crate::draw::Color::Empty,
                 background: crate::draw::Color::EmptyBackground,

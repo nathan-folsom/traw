@@ -8,12 +8,11 @@ use std::sync::OnceLock;
 static mut DEBUG: OnceLock<Vec<String>> = OnceLock::new();
 
 #[derive(Default)]
-pub struct DebugPanel {
-    messages: Vec<String>,
-}
+pub struct DebugPanel {}
 
 pub fn debug(message: String) {
     unsafe {
+        let _ = DEBUG.set(vec![]);
         DEBUG
             .get_mut()
             .expect("DEBUG messages uninitialized")

@@ -14,7 +14,7 @@ use crate::{
     draw::{Color, Draw, Intersection, Point},
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Rectangle {
     pub x: i32,
     pub y: i32,
@@ -205,7 +205,7 @@ impl Draw for Rectangle {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 enum Shrink {
     X,
     Y,

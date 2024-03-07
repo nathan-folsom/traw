@@ -1,6 +1,5 @@
 use std::io::{stdout, Write};
 
-use arrow::Arrow;
 use crossterm::{
     cursor,
     event::{self, KeyCode, KeyEvent},
@@ -74,38 +73,7 @@ fn main() -> std::io::Result<()> {
                         Mode::Normal | Mode::DrawRectangle(_) => match key {
                             'q' => break,
                             's' => save(&state, &file_name)?,
-                            'i' => match state.mode {
-                                Mode::DrawRectangle(rect) => {
-                                    state.mode = get_text_mode(rect)?;
-                                }
-                                Mode::Normal => {
-                                    let (x, y) = cursor::position()?;
-                                    let (intersection, i) = state.get_cursor_intersection()?;
-
-                                    match intersection {
-                                        Intersection::None => {
-                                            state.mode = Mode::DrawRectangle(Rectangle::new_at(
-                                                x as i32, y as i32,
-                                            ));
-                                        }
-                                        Intersection::Edge => {
-                                            state.mode = Mode::DrawArrow(Arrow::init());
-                                        }
-                                        Intersection::Inner => {
-                                            let edited = state.shapes.remove(i);
-                                            match edited {
-                                                Shape::Box(rectangle) => {
-                                                    state.mode = get_text_mode(rectangle)?;
-                                                }
-                                                Shape::Line(arrow) => {
-                                                    state.mode = Mode::DrawArrow(arrow);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                _ => {}
-                            },
+                            'i' => state.handle_insert()?,
                             'x' => match state.mode {
                                 Mode::Normal => {
                                     let (intersection, i) = state.get_cursor_intersection()?;
