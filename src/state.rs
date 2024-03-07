@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     arrow::Arrow,
     debug_panel::debug,
-    draw::{Draw, Intersection},
+    draw::{Draw, Intersection, Renderer},
     mode::Mode,
     rectangle::Rectangle,
     shape::Shape,
@@ -61,9 +61,46 @@ impl State {
         Ok(())
     }
 
+    pub fn handle_enter(&mut self) -> std::io::Result<()> {
+        match &self.mode {
+            Mode::DrawRectangle(rect) => {
+                self.enter_mode(get_text_mode(rect.clone())?);
+            }
+            Mode::Text(rect) => {
+                self.shapes.push(Shape::Box(rect.clone()));
+                self.enter_mode(Mode::Normal);
+            }
+            Mode::DrawArrow(arrow) => {
+                self.shapes.push(Shape::Line(arrow.clone()));
+                self.enter_mode(Mode::Normal);
+            }
+            _ => {}
+        }
+
+        Ok(())
+    }
+
     fn enter_mode(&mut self, mode: Mode) {
         debug(format!("Enter mode {:?}", mode));
         self.mode = mode;
+    }
+
+    pub fn handle_delete(&mut self, renderer: &mut Renderer) -> std::io::Result<()> {
+        match self.mode {
+            Mode::Normal => {
+                let (intersection, i) = self.get_cursor_intersection()?;
+                match intersection {
+                    Intersection::Edge | Intersection::Inner => {
+                        renderer.clear(&self.shapes[i])?;
+                        self.shapes.remove(i);
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
+        }
+
+        Ok(())
     }
 
     pub fn get_cursor_intersection(&self) -> std::io::Result<(Intersection, usize)> {
@@ -79,6 +116,16 @@ impl State {
         }
 
         Ok((Intersection::None, 0))
+    }
+
+    pub fn handle_backspace(&mut self) -> std::io::Result<()> {
+        match &mut self.mode {
+            Mode::Text(rect) => {
+                rect.on_backspace()?;
+            }
+            _ => {}
+        }
+        Ok(())
     }
 }
 

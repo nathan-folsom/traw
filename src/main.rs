@@ -3,16 +3,14 @@ use std::io::{stdout, Write};
 use crossterm::{
     cursor,
     event::{self, KeyCode, KeyEvent},
-    execute, queue,
+    execute,
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
 use debug_panel::DebugPanel;
-use draw::{Intersection, Renderer};
+use draw::Renderer;
 use mode::Mode;
 use persistence::{load, save};
-use rectangle::Rectangle;
-use shape::Shape;
 use state::State;
 use status_bar::StatusBar;
 
@@ -53,16 +51,8 @@ fn main() -> std::io::Result<()> {
         match event::read()? {
             event::Event::Key(key_event) => {
                 match state.mode {
-                    Mode::Normal => {
-                        handle_motions(key_event)?;
-                    }
                     Mode::Text(_) => {}
-                    Mode::DrawRectangle(_) => {
-                        handle_motions(key_event)?;
-                    }
-                    Mode::DrawArrow(_) => {
-                        handle_motions(key_event)?;
-                    }
+                    _ => handle_motions(key_event)?,
                 }
 
                 match key_event.code {
@@ -74,44 +64,14 @@ fn main() -> std::io::Result<()> {
                             'q' => break,
                             's' => save(&state, &file_name)?,
                             'i' => state.handle_insert()?,
-                            'x' => match state.mode {
-                                Mode::Normal => {
-                                    let (intersection, i) = state.get_cursor_intersection()?;
-                                    match intersection {
-                                        Intersection::Edge | Intersection::Inner => {
-                                            renderer.clear(&state.shapes[i])?;
-                                            state.shapes.remove(i);
-                                        }
-                                        _ => {}
-                                    }
-                                }
-                                _ => {}
-                            },
+                            'x' => state.handle_delete(&mut renderer)?,
                             _ => {}
                         },
                         _ => {}
                     },
 
-                    KeyCode::Enter => match state.mode {
-                        Mode::DrawRectangle(rect) => {
-                            state.mode = get_text_mode(rect)?;
-                        }
-                        Mode::Text(rect) => {
-                            state.shapes.push(Shape::Box(rect));
-                            state.mode = Mode::Normal;
-                        }
-                        Mode::DrawArrow(arrow) => {
-                            state.shapes.push(Shape::Line(arrow));
-                            state.mode = Mode::Normal;
-                        }
-                        _ => {}
-                    },
-                    KeyCode::Backspace => match &mut state.mode {
-                        Mode::Text(rect) => {
-                            rect.on_backspace()?;
-                        }
-                        _ => {}
-                    },
+                    KeyCode::Enter => state.handle_enter()?,
+                    KeyCode::Backspace => state.handle_backspace()?,
                     _ => {}
                 }
             }
@@ -190,11 +150,4 @@ fn handle_motions(event: KeyEvent) -> std::io::Result<()> {
     }
 
     Ok(())
-}
-
-fn get_text_mode(rect: Rectangle) -> std::io::Result<Mode> {
-    let (next_x, next_y) = rect.get_inner_cursor_position();
-    queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
-
-    Ok(Mode::Text(rect))
 }
