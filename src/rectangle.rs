@@ -82,10 +82,16 @@ impl Rectangle {
 }
 
 impl Draw for Rectangle {
-    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
+    fn draw(&self, hover: bool) -> std::io::Result<Vec<Point<i32>>> {
         let mut points = vec![];
         let foreground = Color::Border;
-        let background = Color::BorderBackground;
+        let background = {
+            if hover {
+                Color::BorderBackgroundHover
+            } else {
+                Color::BorderBackground
+            }
+        };
 
         for y in 0..self.height {
             for x in 0..self.width {

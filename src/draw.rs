@@ -26,9 +26,9 @@ const DEFAULT_COLORS: [(Color, crossterm::style::Color); 3] = [
     (
         Color::BorderBackgroundHover,
         crossterm::style::Color::Rgb {
-            r: 20,
-            g: 20,
-            b: 20,
+            r: 200,
+            g: 200,
+            b: 200,
         },
     ),
 ];
@@ -54,7 +54,7 @@ impl Into<Point<i32>> for Point<u16> {
 }
 
 pub trait Draw {
-    fn draw(&self) -> std::io::Result<Vec<Point<i32>>>;
+    fn draw(&self, hover: bool) -> std::io::Result<Vec<Point<i32>>>;
     fn get_intersection(&self) -> std::io::Result<Intersection>;
     fn clear(&self) -> std::io::Result<Vec<(i32, i32)>>;
 }
@@ -99,7 +99,11 @@ impl Renderer {
 
     pub fn render(&mut self, shape: &impl Draw) -> std::io::Result<()> {
         let (cursor_x, cursor_y) = cursor::position()?;
-        let points = shape.draw()?;
+        let hover = match shape.get_intersection()? {
+            Intersection::None => false,
+            _ => true,
+        };
+        let points = shape.draw(hover)?;
 
         for point in points {
             self.draw_at(point)?;

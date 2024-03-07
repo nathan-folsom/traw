@@ -13,10 +13,10 @@ pub enum Shape {
 }
 
 impl Draw for Shape {
-    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
+    fn draw(&self, hover: bool) -> std::io::Result<Vec<Point<i32>>> {
         match self {
-            Shape::Line(shape) => shape.draw(),
-            Shape::Box(shape) => shape.draw(),
+            Shape::Line(shape) => shape.draw(hover),
+            Shape::Box(shape) => shape.draw(hover),
         }
     }
     fn clear(&self) -> std::io::Result<Vec<(i32, i32)>> {

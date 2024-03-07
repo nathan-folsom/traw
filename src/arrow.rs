@@ -32,11 +32,17 @@ impl Arrow {
 }
 
 impl Draw for Arrow {
-    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
+    fn draw(&self, hover: bool) -> std::io::Result<Vec<Point<i32>>> {
         let mut points = vec![];
 
         let foreground = Color::Border;
-        let background = Color::BorderBackground;
+        let background = {
+            if hover {
+                Color::BorderBackgroundHover
+            } else {
+                Color::BorderBackground
+            }
+        };
 
         if let Some((x, y)) = self.clear {
             points.push(Point {
@@ -89,7 +95,7 @@ impl Draw for Arrow {
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
         let (c_x, c_y) = cursor::position()?;
 
-        for Point { x, y, .. } in self.draw()? {
+        for Point { x, y, .. } in self.draw(false)? {
             if x as u16 == c_x && y as u16 == c_y {
                 return Ok(Intersection::Edge);
             }
