@@ -2,6 +2,17 @@
 
 Terminal ui with vim-inspired keybindings for drawing system diagrams
 
+## Basic Usage
+
+Call from the command line:
+```bash
+traw [options]
+```
+
+### Options
+
+- file_name (optional, defaults to 'unnamed.traw') file to read from/save to
+
 ## Keybindings
 
 - 'q' (normal mode) - Exit `traw`
@@ -13,3 +24,13 @@ Terminal ui with vim-inspired keybindings for drawing system diagrams
 - 'x' (normal mode) - Delete shape under cursor
 - 's' (normal mode) - Save current file
 
+## File 
+
+## Feature To-do
+
+Things that are useful and should be added:
+
+- Count modifiers: e.g. '10l' to go 10 cols to the right
+- Select mode: 'v', move cursor then 'y' to copy to clipboard
+- Resize boxes
+- Move boxes
