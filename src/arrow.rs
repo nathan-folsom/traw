@@ -49,8 +49,8 @@ impl Draw for Arrow {
                 x,
                 y,
                 character: ' ',
-                foreground,
-                background,
+                foreground: Color::Empty,
+                background: Color::EmptyBackground,
             });
         }
 

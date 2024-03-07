@@ -17,7 +17,11 @@ pub enum Color {
 const DEFAULT_COLORS: [(Color, crossterm::style::Color); 3] = [
     (
         Color::Border,
-        crossterm::style::Color::Rgb { r: 0, g: 255, b: 0 },
+        crossterm::style::Color::Rgb {
+            r: 255,
+            g: 255,
+            b: 255,
+        },
     ),
     (
         Color::BorderBackground,
