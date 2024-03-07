@@ -139,8 +139,8 @@ impl Draw for Rectangle {
                         x: self.x + self.width,
                         y: self.y + y,
                         character: ' ',
-                        foreground,
-                        background,
+                        foreground: Color::Empty,
+                        background: Color::EmptyBackground,
                     });
                 }
             }
@@ -150,8 +150,8 @@ impl Draw for Rectangle {
                         x: self.x + x,
                         y: self.y + self.height,
                         character: ' ',
-                        foreground,
-                        background,
+                        foreground: Color::Empty,
+                        background: Color::EmptyBackground,
                     });
                 }
             }

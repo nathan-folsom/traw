@@ -5,7 +5,7 @@ use crossterm::{
     style::{Print, SetBackgroundColor, SetForegroundColor},
 };
 
-#[derive(PartialEq, Eq, Copy, Clone)]
+#[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Color {
     Empty,
     EmptyBackground,
@@ -26,13 +26,14 @@ const DEFAULT_COLORS: [(Color, crossterm::style::Color); 3] = [
     (
         Color::BorderBackgroundHover,
         crossterm::style::Color::Rgb {
-            r: 200,
-            g: 200,
-            b: 200,
+            r: 100,
+            g: 100,
+            b: 100,
         },
     ),
 ];
 
+#[derive(Debug)]
 pub struct Point<T> {
     pub x: T,
     pub y: T,
@@ -74,7 +75,7 @@ pub struct Renderer {
     // y: u32,
     // width: u16,
     // height: u16,
-    state: Vec<Vec<char>>,
+    state: Vec<Vec<(char, Color, Color)>>,
 }
 
 impl Renderer {
@@ -83,7 +84,7 @@ impl Renderer {
         for _ in 0..width {
             let mut cols = vec![];
             for _ in 0..height {
-                cols.push(' ');
+                cols.push((' ', Color::Empty, Color::EmptyBackground));
             }
             initial_state.push(cols);
         }
@@ -154,9 +155,9 @@ impl Renderer {
             foreground,
             background,
         } = point;
-        let current_char = self.state[x as usize][y as usize];
+        let (current_char, current_fg, current_bg) = self.state[x as usize][y as usize];
 
-        if current_char != character {
+        if current_char != character || foreground != current_fg || background != current_bg {
             queue!(
                 stdout(),
                 cursor::MoveTo(x as u16, y as u16),
@@ -164,7 +165,7 @@ impl Renderer {
                 SetBackgroundColor(get_default_color(background, false)),
                 Print(character)
             )?;
-            self.state[x as usize][y as usize] = character;
+            self.state[x as usize][y as usize] = (character, foreground, background);
         }
 
         Ok(())
