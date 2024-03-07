@@ -8,6 +8,7 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
+use debug_panel::DebugPanel;
 use draw::{Intersection, Renderer};
 use mode::Mode;
 use persistence::{load, save};
@@ -18,6 +19,7 @@ use status_bar::StatusBar;
 
 mod arrow;
 mod characters;
+mod debug_panel;
 mod draw;
 mod mode;
 mod persistence;
@@ -32,6 +34,7 @@ fn main() -> std::io::Result<()> {
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
     let mut status_bar = StatusBar::default();
+    let debug_panel = DebugPanel::default();
     let path_arg = std::env::args().nth(1);
 
     let mut file_name = "unnamed.traw".to_string();
@@ -149,6 +152,7 @@ fn main() -> std::io::Result<()> {
 
         status_bar.update(&state.mode)?;
         renderer.render_sticky(&status_bar)?;
+        renderer.render_sticky(&debug_panel)?;
         for shape in &state.shapes {
             renderer.render(shape)?;
         }
