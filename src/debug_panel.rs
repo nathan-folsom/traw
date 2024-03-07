@@ -2,7 +2,7 @@ use crossterm::terminal;
 
 use crate::draw::{DrawSticky, Point};
 
-const HEIGHT: u16 = 10;
+const HEIGHT: usize = 10;
 
 use std::sync::OnceLock;
 static mut DEBUG: OnceLock<Vec<String>> = OnceLock::new();
@@ -25,22 +25,25 @@ impl DrawSticky for DebugPanel {
         let (w, h) = terminal::size()?;
         let mut points = vec![];
 
+        let messages = unsafe { DEBUG.get_or_init(|| vec![]) };
         for y in 0..HEIGHT {
-            if let Some(message) = unsafe { DEBUG.get_or_init(|| vec![]).get(y as usize) } {
-                let mut i = 0;
-                for c in message.chars() {
-                    if i >= w {
-                        break;
-                    }
-
+            let end_offset = HEIGHT - y;
+            if end_offset > messages.len() {
+                continue;
+            }
+            if let Some(message) = messages.get(messages.len() - end_offset) {
+                for x in 0..w {
+                    let character = match message.chars().nth(x as usize) {
+                        Some(c) => c,
+                        None => ' ',
+                    };
                     points.push(Point {
-                        x: i,
-                        y: h - 10 + y,
-                        character: c,
+                        x,
+                        y: h - 10 + y as u16,
+                        character,
                         foreground: crate::draw::Color::Empty,
                         background: crate::draw::Color::EmptyBackground,
                     });
-                    i += 1;
                 }
             }
         }
