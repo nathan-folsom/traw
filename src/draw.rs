@@ -142,7 +142,12 @@ impl Renderer {
             queue!(stdout(), SetBackgroundColor(get_default_color(bg, false)))?;
         }
         for OverlayPoint { x, y } in points {
-            queue!(stdout(), cursor::MoveTo(x as u16, y as u16),)?;
+            let (current_char, _, _) = self.state[x as usize][y as usize];
+            queue!(
+                stdout(),
+                cursor::MoveTo(x as u16, y as u16),
+                Print(current_char)
+            )?;
         }
         queue!(stdout(), cursor::RestorePosition)?;
         Ok(())
