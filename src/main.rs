@@ -11,6 +11,7 @@ use debug_panel::DebugPanel;
 use draw::Renderer;
 use mode::Mode;
 use persistence::{load, save};
+use rectangle::Drag;
 use state::State;
 use status_bar::StatusBar;
 
@@ -59,12 +60,13 @@ fn main() -> std::io::Result<()> {
                     Mode::Text(rect) => {
                         rect.on_char(key)?;
                     }
-                    Mode::Normal | Mode::DrawRectangle(_, _) => match key {
+                    Mode::Normal => match key {
                         'q' => break,
                         's' => save(&state, &file_name)?,
                         'i' => state.handle_insert()?,
                         'r' => state.handle_drag()?,
                         'x' => state.handle_delete(&mut renderer)?,
+                        'v' => state.handle_select()?,
                         _ => {}
                     },
                     _ => {}
@@ -95,6 +97,10 @@ fn main() -> std::io::Result<()> {
             Mode::DrawArrow(arrow) => {
                 arrow.update(cursor::position()?);
                 renderer.render(arrow)?;
+            }
+            Mode::Select(selection) => {
+                selection.drag_corner(&mode::Anchor::BottomRight)?;
+                renderer.render_overlay(selection)?;
             }
         }
 

@@ -70,6 +70,15 @@ pub trait DrawSticky {
     fn draw(&self) -> std::io::Result<Vec<Point<u16>>>;
 }
 
+pub trait DrawOverlay {
+    fn draw(&self) -> (Vec<OverlayPoint>, Option<Color>, Option<Color>);
+}
+
+pub struct OverlayPoint {
+    pub x: i32,
+    pub y: i32,
+}
+
 pub enum Intersection {
     None,
     Edge(EdgeIntersection),
@@ -83,10 +92,6 @@ pub enum EdgeIntersection {
 }
 
 pub struct Renderer {
-    // x: u32,
-    // y: u32,
-    // width: u16,
-    // height: u16,
     state: Vec<Vec<(char, Color, Color)>>,
 }
 
@@ -102,48 +107,50 @@ impl Renderer {
         }
 
         Self {
-            //         x: 0,
-            //         y: 0,
-            //         width,
-            //         height,
             state: initial_state,
         }
     }
 
     pub fn render(&mut self, shape: &impl Draw) -> std::io::Result<()> {
-        let (cursor_x, cursor_y) = cursor::position()?;
-        let hover = match shape.get_intersection()? {
-            Intersection::None => false,
-            _ => true,
-        };
+        queue!(stdout(), cursor::SavePosition)?;
+        let hover = !matches!(shape.get_intersection()?, Intersection::None);
         let points = shape.draw(hover)?;
-
         for point in points {
             self.draw_at(point)?;
         }
-
-        queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
-
+        queue!(stdout(), cursor::RestorePosition)?;
         Ok(())
     }
 
     pub fn render_sticky(&mut self, shape: &impl DrawSticky) -> std::io::Result<()> {
-        let (cursor_x, cursor_y) = cursor::position()?;
+        queue!(stdout(), cursor::SavePosition)?;
         let points = shape.draw()?;
-
         for point in points {
             self.draw_at(point.into())?;
         }
+        queue!(stdout(), cursor::RestorePosition)?;
+        Ok(())
+    }
 
-        queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
-
+    pub fn render_overlay(&mut self, overlay: &impl DrawOverlay) -> std::io::Result<()> {
+        let (points, foreground, background) = overlay.draw();
+        queue!(stdout(), cursor::SavePosition)?;
+        if let Some(fg) = foreground {
+            queue!(stdout(), SetForegroundColor(get_default_color(fg, true)))?;
+        }
+        if let Some(bg) = background {
+            queue!(stdout(), SetBackgroundColor(get_default_color(bg, false)))?;
+        }
+        for OverlayPoint { x, y } in points {
+            queue!(stdout(), cursor::MoveTo(x as u16, y as u16),)?;
+        }
+        queue!(stdout(), cursor::RestorePosition)?;
         Ok(())
     }
 
     pub fn clear(&mut self, shape: &impl Draw) -> std::io::Result<()> {
-        let (cursor_x, cursor_y) = cursor::position()?;
+        queue!(stdout(), cursor::SavePosition)?;
         let points = shape.clear()?;
-
         for (x, y) in points {
             self.draw_at(Point {
                 x,
@@ -153,9 +160,7 @@ impl Renderer {
                 background: Color::EmptyBackground,
             })?;
         }
-
-        queue!(stdout(), cursor::MoveTo(cursor_x, cursor_y),)?;
-
+        queue!(stdout(), cursor::RestorePosition)?;
         Ok(())
     }
 

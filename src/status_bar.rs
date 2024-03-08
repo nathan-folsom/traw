@@ -15,23 +15,17 @@ const NORMAL: &str = "Normal";
 const DRAW: &str = "Draw";
 const TEXT: &str = "Text";
 const ARROW: &str = "Arrow";
+const SELECT: &str = "Select";
 
 impl StatusBar {
     pub fn update(&mut self, mode: &Mode) -> std::io::Result<()> {
-        match mode {
-            Mode::Normal => {
-                self.mode_text = NORMAL;
-            }
-            Mode::DrawRectangle(_, _) => {
-                self.mode_text = DRAW;
-            }
-            Mode::DrawArrow(_) => {
-                self.mode_text = ARROW;
-            }
-            Mode::Text(_) => {
-                self.mode_text = TEXT;
-            }
-        }
+        self.mode_text = match mode {
+            Mode::Normal => NORMAL,
+            Mode::DrawRectangle(_, _) => DRAW,
+            Mode::DrawArrow(_) => ARROW,
+            Mode::Text(_) => TEXT,
+            Mode::Select(_) => SELECT,
+        };
 
         let (c_x, c_y) = cursor::position()?;
         self.cursor_text = format!("{}:{}", c_x, c_y);

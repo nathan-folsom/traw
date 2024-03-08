@@ -14,7 +14,7 @@ use crate::{
         EdgeIntersection::{Corner, Side},
         Intersection, Renderer,
     },
-    mode::{Anchor, Mode},
+    mode::{Anchor, Mode, Selection},
     rectangle::Rectangle,
     shape::Shape,
 };
@@ -85,6 +85,17 @@ impl State {
         Ok(())
     }
 
+    pub fn handle_select(&mut self) -> std::io::Result<()> {
+        let (cursor_x, cursor_y) = cursor::position()?;
+        self.enter_mode(Mode::Select(Selection {
+            x: cursor_x as i32,
+            y: cursor_y as i32,
+            width: 1,
+            height: 1,
+        }));
+        Ok(())
+    }
+
     pub fn handle_enter(&mut self) -> std::io::Result<()> {
         match &self.mode {
             Mode::DrawRectangle(rect, _) => {
@@ -103,6 +114,9 @@ impl State {
             }
             Mode::DrawArrow(arrow) => {
                 self.shapes.push(Shape::Line(arrow.clone()));
+                self.enter_mode(Mode::Normal);
+            }
+            Mode::Select(_) => {
                 self.enter_mode(Mode::Normal);
             }
             _ => {}

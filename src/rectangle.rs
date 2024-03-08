@@ -40,73 +40,6 @@ impl Rectangle {
         }
     }
 
-    pub fn drag_corner(&mut self, anchor: &Anchor) -> std::io::Result<()> {
-        let (c_x, c_y) = cursor::position()?;
-        let cursor_x = c_x as i32;
-        let cursor_y = c_y as i32;
-
-        match anchor {
-            Anchor::TopLeft => {
-                self.drag_top(cursor_y);
-                self.drag_left(cursor_x);
-            }
-            Anchor::TopRight => {
-                self.drag_top(cursor_y);
-                self.drag_right(cursor_x);
-            }
-            Anchor::BottomRight => {
-                self.drag_right(cursor_x);
-                self.drag_bottom(cursor_y);
-            }
-            Anchor::BottomLeft => {
-                self.drag_bottom(cursor_y);
-                self.drag_left(cursor_x);
-            }
-        }
-
-        Ok(())
-    }
-
-    fn drag_right(&mut self, cursor_x: i32) {
-        let next_width = cursor_x - self.x + 1;
-        if next_width < self.width {
-            self.shrink = Shrink::Right;
-        }
-        self.width = next_width;
-    }
-
-    fn drag_top(&mut self, cursor_y: i32) {
-        match cursor_y.cmp(&self.y) {
-            Less => self.height += 1,
-            Greater => {
-                self.height -= 1;
-                self.shrink = Shrink::Top;
-            }
-            _ => {}
-        }
-        self.y = cursor_y;
-    }
-
-    fn drag_bottom(&mut self, cursor_y: i32) {
-        let next_height = cursor_y - self.y + 1;
-        if next_height < self.height {
-            self.shrink = Shrink::Bottom;
-        }
-        self.height = next_height;
-    }
-
-    fn drag_left(&mut self, cursor_x: i32) {
-        match cursor_x.cmp(&self.x) {
-            Less => self.width += 1,
-            Greater => {
-                self.width -= 1;
-                self.shrink = Shrink::Left;
-            }
-            _ => {}
-        }
-        self.x = cursor_x;
-    }
-
     pub fn on_char(&mut self, key: char) -> std::io::Result<()> {
         self.text.push(key);
         let (next_x, next_y) = self.get_inner_cursor_position();
@@ -287,6 +220,73 @@ impl Draw for Rectangle {
             }
         }
         Ok(points)
+    }
+}
+
+impl Drag for Rectangle {
+    fn rect(&mut self) -> (&mut i32, &mut i32, &mut i32, &mut i32) {
+        (&mut self.x, &mut self.y, &mut self.width, &mut self.height)
+    }
+}
+
+pub trait Drag {
+    fn rect(&mut self) -> (&mut i32, &mut i32, &mut i32, &mut i32);
+
+    fn drag_corner(&mut self, anchor: &Anchor) -> std::io::Result<()> {
+        let (c_x, c_y) = cursor::position()?;
+        let cursor_x = c_x as i32;
+        let cursor_y = c_y as i32;
+
+        match anchor {
+            Anchor::TopLeft => {
+                self.drag_top(cursor_y);
+                self.drag_left(cursor_x);
+            }
+            Anchor::TopRight => {
+                self.drag_top(cursor_y);
+                self.drag_right(cursor_x);
+            }
+            Anchor::BottomRight => {
+                self.drag_right(cursor_x);
+                self.drag_bottom(cursor_y);
+            }
+            Anchor::BottomLeft => {
+                self.drag_bottom(cursor_y);
+                self.drag_left(cursor_x);
+            }
+        }
+
+        Ok(())
+    }
+
+    fn drag_right(&mut self, cursor_x: i32) {
+        let (x, _, width, _) = self.rect();
+        *width = cursor_x - *x + 1;
+    }
+
+    fn drag_top(&mut self, cursor_y: i32) {
+        let (_, y, _, height) = self.rect();
+        match cursor_y.cmp(y) {
+            Less => *height += 1,
+            Greater => *height -= 1,
+            _ => {}
+        }
+        *y = cursor_y;
+    }
+
+    fn drag_bottom(&mut self, cursor_y: i32) {
+        let (_, y, _, height) = self.rect();
+        *height = cursor_y - *y + 1;
+    }
+
+    fn drag_left(&mut self, cursor_x: i32) {
+        let (x, _, width, _) = self.rect();
+        match cursor_x.cmp(x) {
+            Less => *width += 1,
+            Greater => *width -= 1,
+            _ => {}
+        }
+        *x = cursor_x;
     }
 }
 
