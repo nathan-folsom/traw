@@ -20,6 +20,7 @@ traw [options]
   - Start drawing a box when cursor is in empty space
   - Start drawing an arrow when cursor is on a box boundary
   - Edit box text content when cursor is inside a box
+- 'r' (normal mode) - Edit an existing box by dragging from a corner
 - 'hjkl' (normal mode, draw mode) - Move around
 - 'x' (normal mode) - Delete shape under cursor
 - 's' (normal mode) - Save current file

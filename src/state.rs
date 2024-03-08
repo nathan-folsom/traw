@@ -52,13 +52,6 @@ impl State {
                     Intersection::Edge(Side) => {
                         self.enter_mode(Mode::DrawArrow(Arrow::init()));
                     }
-                    Intersection::Edge(Corner(Some(anchor))) => {
-                        if let Shape::Box(rectangle) = self.shapes.remove(i) {
-                            self.enter_mode(Mode::DrawRectangle(rectangle, anchor))
-                        }
-                    }
-                    // Do nothing when intersecting a non-rectangle corner
-                    Intersection::Edge(Corner(_)) => {}
                     Intersection::Inner => {
                         let edited = self.shapes.remove(i);
                         match edited {
@@ -70,9 +63,23 @@ impl State {
                             }
                         }
                     }
+                    _ => {}
                 }
             }
             _ => {}
+        }
+
+        Ok(())
+    }
+
+    pub fn handle_drag(&mut self) -> std::io::Result<()> {
+        if let Mode::Normal = self.mode {
+            let (intersection, i) = self.get_cursor_intersection()?;
+            if let Intersection::Edge(Corner(Some(anchor))) = intersection {
+                if let Shape::Box(rectangle) = self.shapes.remove(i) {
+                    self.enter_mode(Mode::DrawRectangle(rectangle, anchor))
+                }
+            }
         }
 
         Ok(())

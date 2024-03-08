@@ -63,6 +63,7 @@ fn main() -> std::io::Result<()> {
                         'q' => break,
                         's' => save(&state, &file_name)?,
                         'i' => state.handle_insert()?,
+                        'r' => state.handle_drag()?,
                         'x' => state.handle_delete(&mut renderer)?,
                         _ => {}
                     },
