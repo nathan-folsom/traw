@@ -85,6 +85,7 @@ impl State {
                 if rect.text.is_empty() {
                     self.enter_text_mode(rect.clone())?;
                 } else {
+                    self.shapes.push(Shape::Box(rect.clone()));
                     self.enter_mode(Mode::Normal);
                 }
             }

@@ -40,7 +40,7 @@ impl Rectangle {
         }
     }
 
-    pub fn update(&mut self, anchor: &Anchor) -> std::io::Result<()> {
+    pub fn drag_corner(&mut self, anchor: &Anchor) -> std::io::Result<()> {
         let (c_x, c_y) = cursor::position()?;
         let cursor_x = c_x as i32;
         let cursor_y = c_y as i32;

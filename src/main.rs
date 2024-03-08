@@ -26,7 +26,7 @@ mod state;
 mod status_bar;
 
 fn main() -> std::io::Result<()> {
-    let _ = init()?;
+    init()?;
     let mut state = State::init();
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
@@ -48,34 +48,31 @@ fn main() -> std::io::Result<()> {
     }
 
     loop {
-        match event::read()? {
-            event::Event::Key(key_event) => {
-                match state.mode {
-                    Mode::Text(_) => {}
-                    _ => handle_motions(key_event)?,
-                }
+        if let event::Event::Key(key_event) = event::read()? {
+            match state.mode {
+                Mode::Text(_) => {}
+                _ => handle_motions(key_event)?,
+            }
 
-                match key_event.code {
-                    KeyCode::Char(key) => match &mut state.mode {
-                        Mode::Text(rect) => {
-                            rect.on_char(key)?;
-                        }
-                        Mode::Normal | Mode::DrawRectangle(_, _) => match key {
-                            'q' => break,
-                            's' => save(&state, &file_name)?,
-                            'i' => state.handle_insert()?,
-                            'x' => state.handle_delete(&mut renderer)?,
-                            _ => {}
-                        },
+            match key_event.code {
+                KeyCode::Char(key) => match &mut state.mode {
+                    Mode::Text(rect) => {
+                        rect.on_char(key)?;
+                    }
+                    Mode::Normal | Mode::DrawRectangle(_, _) => match key {
+                        'q' => break,
+                        's' => save(&state, &file_name)?,
+                        'i' => state.handle_insert()?,
+                        'x' => state.handle_delete(&mut renderer)?,
                         _ => {}
                     },
-
-                    KeyCode::Enter => state.handle_enter()?,
-                    KeyCode::Backspace => state.handle_backspace()?,
                     _ => {}
-                }
+                },
+
+                KeyCode::Enter => state.handle_enter()?,
+                KeyCode::Backspace => state.handle_backspace()?,
+                _ => {}
             }
-            _ => {}
         }
 
         status_bar.update(&state.mode)?;
@@ -88,7 +85,7 @@ fn main() -> std::io::Result<()> {
         match &mut state.mode {
             Mode::Normal => {}
             Mode::DrawRectangle(rect, anchor) => {
-                rect.update(anchor)?;
+                rect.drag_corner(anchor)?;
                 renderer.render(rect)?;
             }
             Mode::Text(rect) => {
@@ -130,8 +127,8 @@ fn end() -> std::io::Result<()> {
 }
 
 fn handle_motions(event: KeyEvent) -> std::io::Result<()> {
-    match event.code {
-        KeyCode::Char(key) => match key {
+    if let KeyCode::Char(key) = event.code {
+        match key {
             'h' => {
                 execute!(stdout(), cursor::MoveLeft(1))?;
             }
@@ -145,8 +142,7 @@ fn handle_motions(event: KeyEvent) -> std::io::Result<()> {
                 execute!(stdout(), cursor::MoveRight(1))?;
             }
             _ => {}
-        },
-        _ => {}
+        }
     }
 
     Ok(())
