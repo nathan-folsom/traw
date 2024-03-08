@@ -1,6 +1,9 @@
 use std::io::stdout;
 
-use crossterm::{cursor, queue};
+use crossterm::{
+    cursor::{self},
+    queue,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -29,7 +32,7 @@ impl State {
     pub fn handle_insert(&mut self) -> std::io::Result<()> {
         match &self.mode {
             Mode::DrawRectangle(rect) => {
-                self.enter_mode(get_text_mode(rect.clone())?);
+                self.enter_text_mode(rect.clone())?;
             }
             Mode::Normal => {
                 let (x, y) = cursor::position()?;
@@ -46,7 +49,7 @@ impl State {
                         let edited = self.shapes.remove(i);
                         match edited {
                             Shape::Box(rectangle) => {
-                                self.enter_mode(get_text_mode(rectangle)?);
+                                self.enter_text_mode(rectangle)?;
                             }
                             Shape::Line(arrow) => {
                                 self.enter_mode(Mode::DrawArrow(arrow));
@@ -64,10 +67,11 @@ impl State {
     pub fn handle_enter(&mut self) -> std::io::Result<()> {
         match &self.mode {
             Mode::DrawRectangle(rect) => {
-                self.enter_mode(get_text_mode(rect.clone())?);
+                self.enter_text_mode(rect.clone())?;
             }
             Mode::Text(rect) => {
                 self.shapes.push(Shape::Box(rect.clone()));
+                queue!(stdout(), cursor::SetCursorStyle::SteadyBlock)?;
                 self.enter_mode(Mode::Normal);
             }
             Mode::DrawArrow(arrow) => {
@@ -76,6 +80,15 @@ impl State {
             }
             _ => {}
         }
+
+        Ok(())
+    }
+
+    fn enter_text_mode(&mut self, rect: Rectangle) -> std::io::Result<()> {
+        queue!(stdout(), cursor::SetCursorStyle::SteadyBar)?;
+        let (next_x, next_y) = rect.get_inner_cursor_position();
+        self.enter_mode(Mode::Text(rect));
+        queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
 
         Ok(())
     }
@@ -127,11 +140,4 @@ impl State {
         }
         Ok(())
     }
-}
-
-fn get_text_mode(rect: Rectangle) -> std::io::Result<Mode> {
-    let (next_x, next_y) = rect.get_inner_cursor_position();
-    queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
-
-    Ok(Mode::Text(rect))
 }
