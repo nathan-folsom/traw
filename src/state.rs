@@ -42,8 +42,16 @@ impl State {
                     Intersection::None => {
                         self.enter_mode(Mode::DrawRectangle(Rectangle::new_at(x as i32, y as i32)));
                     }
-                    Intersection::Edge => {
+                    Intersection::Edge(crate::draw::EdgeIntersection::Side) => {
                         self.enter_mode(Mode::DrawArrow(Arrow::init()));
+                    }
+                    Intersection::Edge(crate::draw::EdgeIntersection::Corner) => {
+                        match self.shapes.remove(i) {
+                            Shape::Box(rectangle) => {
+                                self.enter_mode(Mode::DrawRectangle(rectangle))
+                            }
+                            _ => {}
+                        }
                     }
                     Intersection::Inner => {
                         let edited = self.shapes.remove(i);
@@ -103,7 +111,7 @@ impl State {
             Mode::Normal => {
                 let (intersection, i) = self.get_cursor_intersection()?;
                 match intersection {
-                    Intersection::Edge | Intersection::Inner => {
+                    Intersection::Edge(_) | Intersection::Inner => {
                         renderer.clear(&self.shapes[i])?;
                         self.shapes.remove(i);
                     }

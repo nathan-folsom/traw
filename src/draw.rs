@@ -30,9 +30,9 @@ const DEFAULT_COLORS: [(Color, crossterm::style::Color); 3] = [
     (
         Color::BorderBackgroundHover,
         crossterm::style::Color::Rgb {
-            r: 100,
-            g: 100,
-            b: 100,
+            r: 70,
+            g: 70,
+            b: 70,
         },
     ),
 ];
@@ -70,8 +70,13 @@ pub trait DrawSticky {
 
 pub enum Intersection {
     None,
-    Edge,
+    Edge(EdgeIntersection),
     Inner,
+}
+
+pub enum EdgeIntersection {
+    Corner,
+    Side,
 }
 
 pub struct Renderer {

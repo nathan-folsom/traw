@@ -95,10 +95,19 @@ impl Draw for Arrow {
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
         let (c_x, c_y) = cursor::position()?;
 
-        for Point { x, y, .. } in self.draw(false)? {
-            if x as u16 == c_x && y as u16 == c_y {
-                return Ok(Intersection::Edge);
+        for Point {
+            x, y, character, ..
+        } in self.draw(false)?
+        {
+            if x as u16 != c_x || y as u16 != c_y {
+                continue;
             }
+
+            if character == HORIZONTAL_BAR || character == VERTICAL_BAR {
+                return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Side));
+            }
+
+            return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Corner));
         }
 
         Ok(Intersection::None)

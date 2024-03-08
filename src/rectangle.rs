@@ -183,12 +183,18 @@ impl Draw for Rectangle {
         let cursor_on_left_border = c_x == x_0;
         let cursor_on_right_border = c_x == x_1;
 
+        if (cursor_on_right_border || cursor_on_left_border)
+            && (cursor_on_top_border || cursor_on_bottom_border)
+        {
+            return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Corner));
+        }
+
         if cursor_on_top_border
             || cursor_on_right_border
             || cursor_on_bottom_border
             || cursor_on_left_border
         {
-            return Ok(Intersection::Edge);
+            return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Side));
         }
 
         Ok(Intersection::Inner)
