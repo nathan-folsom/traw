@@ -5,6 +5,8 @@ use crossterm::{
     style::{Print, SetBackgroundColor, SetForegroundColor},
 };
 
+use crate::mode::Anchor;
+
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Color {
     Empty,
@@ -75,7 +77,8 @@ pub enum Intersection {
 }
 
 pub enum EdgeIntersection {
-    Corner,
+    /// If intersecting a rectangle, which corner is intersected
+    Corner(Option<Anchor>),
     Side,
 }
 

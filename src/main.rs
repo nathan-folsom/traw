@@ -60,7 +60,7 @@ fn main() -> std::io::Result<()> {
                         Mode::Text(rect) => {
                             rect.on_char(key)?;
                         }
-                        Mode::Normal | Mode::DrawRectangle(_) => match key {
+                        Mode::Normal | Mode::DrawRectangle(_, _) => match key {
                             'q' => break,
                             's' => save(&state, &file_name)?,
                             'i' => state.handle_insert()?,
@@ -87,8 +87,8 @@ fn main() -> std::io::Result<()> {
 
         match &mut state.mode {
             Mode::Normal => {}
-            Mode::DrawRectangle(rect) => {
-                rect.update()?;
+            Mode::DrawRectangle(rect, anchor) => {
+                rect.update(anchor)?;
                 renderer.render(rect)?;
             }
             Mode::Text(rect) => {

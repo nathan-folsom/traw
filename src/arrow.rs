@@ -107,7 +107,9 @@ impl Draw for Arrow {
                 return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Side));
             }
 
-            return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Corner));
+            return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Corner(
+                None,
+            )));
         }
 
         Ok(Intersection::None)

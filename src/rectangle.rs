@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::io::stdout;
+use std::{
+    cmp::Ordering::{Greater, Less},
+    io::stdout,
+};
 
 use crossterm::{
     cursor::{self},
@@ -11,7 +14,8 @@ use crate::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
-    draw::{Color, Draw, Intersection, Point},
+    draw::{Color, Draw, EdgeIntersection::Corner, Intersection, Point},
+    mode::Anchor,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -36,22 +40,71 @@ impl Rectangle {
         }
     }
 
-    pub fn update(&mut self) -> std::io::Result<()> {
-        let (cursor_x, cursor_y) = cursor::position()?;
+    pub fn update(&mut self, anchor: &Anchor) -> std::io::Result<()> {
+        let (c_x, c_y) = cursor::position()?;
+        let cursor_x = c_x as i32;
+        let cursor_y = c_y as i32;
 
-        let next_width = cursor_x as i32 - self.x + 1;
-        let next_height = cursor_y as i32 - self.y + 1;
-
-        if next_width < self.width {
-            self.shrink = Shrink::X;
-        } else if next_height < self.height {
-            self.shrink = Shrink::Y;
+        match anchor {
+            Anchor::TopLeft => {
+                self.drag_top(cursor_y);
+                self.drag_left(cursor_x);
+            }
+            Anchor::TopRight => {
+                self.drag_top(cursor_y);
+                self.drag_right(cursor_x);
+            }
+            Anchor::BottomRight => {
+                self.drag_right(cursor_x);
+                self.drag_bottom(cursor_y);
+            }
+            Anchor::BottomLeft => {
+                self.drag_bottom(cursor_y);
+                self.drag_left(cursor_x);
+            }
         }
 
-        self.width = next_width;
-        self.height = next_height;
-
         Ok(())
+    }
+
+    fn drag_right(&mut self, cursor_x: i32) {
+        let next_width = cursor_x - self.x + 1;
+        if next_width < self.width {
+            self.shrink = Shrink::Right;
+        }
+        self.width = next_width;
+    }
+
+    fn drag_top(&mut self, cursor_y: i32) {
+        match cursor_y.cmp(&self.y) {
+            Less => self.height += 1,
+            Greater => {
+                self.height -= 1;
+                self.shrink = Shrink::Top;
+            }
+            _ => {}
+        }
+        self.y = cursor_y;
+    }
+
+    fn drag_bottom(&mut self, cursor_y: i32) {
+        let next_height = cursor_y - self.y + 1;
+        if next_height < self.height {
+            self.shrink = Shrink::Bottom;
+        }
+        self.height = next_height;
+    }
+
+    fn drag_left(&mut self, cursor_x: i32) {
+        match cursor_x.cmp(&self.x) {
+            Less => self.width += 1,
+            Greater => {
+                self.width -= 1;
+                self.shrink = Shrink::Left;
+            }
+            _ => {}
+        }
+        self.x = cursor_x;
     }
 
     pub fn on_char(&mut self, key: char) -> std::io::Result<()> {
@@ -133,7 +186,7 @@ impl Draw for Rectangle {
         }
 
         match self.shrink {
-            Shrink::X => {
+            Shrink::Right => {
                 for y in 0..self.height {
                     points.push(Point {
                         x: self.x + self.width,
@@ -144,7 +197,7 @@ impl Draw for Rectangle {
                     });
                 }
             }
-            Shrink::Y => {
+            Shrink::Bottom => {
                 for x in 0..self.width {
                     points.push(Point {
                         x: self.x + x,
@@ -155,7 +208,29 @@ impl Draw for Rectangle {
                     });
                 }
             }
-            _ => {}
+            Shrink::Top => {
+                for x in 0..self.width {
+                    points.push(Point {
+                        x: self.x + x,
+                        y: self.y - 1,
+                        character: ' ',
+                        foreground: Color::Empty,
+                        background: Color::EmptyBackground,
+                    });
+                }
+            }
+            Shrink::Left => {
+                for y in 0..self.height {
+                    points.push(Point {
+                        x: self.x - 1,
+                        y: self.y + y,
+                        character: ' ',
+                        foreground: Color::Empty,
+                        background: Color::EmptyBackground,
+                    });
+                }
+            }
+            Shrink::None => {}
         }
 
         Ok(points)
@@ -183,10 +258,14 @@ impl Draw for Rectangle {
         let cursor_on_left_border = c_x == x_0;
         let cursor_on_right_border = c_x == x_1;
 
-        if (cursor_on_right_border || cursor_on_left_border)
-            && (cursor_on_top_border || cursor_on_bottom_border)
-        {
-            return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Corner));
+        if cursor_on_right_border && cursor_on_top_border {
+            return Ok(Intersection::Edge(Corner(Some(Anchor::TopRight))));
+        } else if cursor_on_right_border && cursor_on_bottom_border {
+            return Ok(Intersection::Edge(Corner(Some(Anchor::BottomRight))));
+        } else if cursor_on_left_border && cursor_on_top_border {
+            return Ok(Intersection::Edge(Corner(Some(Anchor::TopLeft))));
+        } else if cursor_on_left_border && cursor_on_bottom_border {
+            return Ok(Intersection::Edge(Corner(Some(Anchor::BottomLeft))));
         }
 
         if cursor_on_top_border
@@ -213,8 +292,10 @@ impl Draw for Rectangle {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 enum Shrink {
-    X,
-    Y,
+    Top,
+    Bottom,
+    Left,
+    Right,
     None,
 }
 

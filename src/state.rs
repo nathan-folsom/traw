@@ -9,8 +9,12 @@ use serde::{Deserialize, Serialize};
 use crate::{
     arrow::Arrow,
     debug_panel::debug,
-    draw::{Draw, Intersection, Renderer},
-    mode::Mode,
+    draw::{
+        Draw,
+        EdgeIntersection::{Corner, Side},
+        Intersection, Renderer,
+    },
+    mode::{Anchor, Mode},
     rectangle::Rectangle,
     shape::Shape,
 };
@@ -31,7 +35,7 @@ impl State {
 
     pub fn handle_insert(&mut self) -> std::io::Result<()> {
         match &self.mode {
-            Mode::DrawRectangle(rect) => {
+            Mode::DrawRectangle(rect, _) => {
                 self.enter_text_mode(rect.clone())?;
             }
             Mode::Normal => {
@@ -40,19 +44,21 @@ impl State {
 
                 match intersection {
                     Intersection::None => {
-                        self.enter_mode(Mode::DrawRectangle(Rectangle::new_at(x as i32, y as i32)));
+                        self.enter_mode(Mode::DrawRectangle(
+                            Rectangle::new_at(x as i32, y as i32),
+                            Anchor::BottomRight,
+                        ));
                     }
-                    Intersection::Edge(crate::draw::EdgeIntersection::Side) => {
+                    Intersection::Edge(Side) => {
                         self.enter_mode(Mode::DrawArrow(Arrow::init()));
                     }
-                    Intersection::Edge(crate::draw::EdgeIntersection::Corner) => {
-                        match self.shapes.remove(i) {
-                            Shape::Box(rectangle) => {
-                                self.enter_mode(Mode::DrawRectangle(rectangle))
-                            }
-                            _ => {}
+                    Intersection::Edge(Corner(Some(anchor))) => {
+                        if let Shape::Box(rectangle) = self.shapes.remove(i) {
+                            self.enter_mode(Mode::DrawRectangle(rectangle, anchor))
                         }
                     }
+                    // Do nothing when intersecting a non-rectangle corner
+                    Intersection::Edge(Corner(_)) => {}
                     Intersection::Inner => {
                         let edited = self.shapes.remove(i);
                         match edited {
@@ -74,8 +80,13 @@ impl State {
 
     pub fn handle_enter(&mut self) -> std::io::Result<()> {
         match &self.mode {
-            Mode::DrawRectangle(rect) => {
-                self.enter_text_mode(rect.clone())?;
+            Mode::DrawRectangle(rect, _) => {
+                // Only start editing text if this is a new rectangle
+                if rect.text.is_empty() {
+                    self.enter_text_mode(rect.clone())?;
+                } else {
+                    self.enter_mode(Mode::Normal);
+                }
             }
             Mode::Text(rect) => {
                 self.shapes.push(Shape::Box(rect.clone()));
@@ -107,18 +118,15 @@ impl State {
     }
 
     pub fn handle_delete(&mut self, renderer: &mut Renderer) -> std::io::Result<()> {
-        match self.mode {
-            Mode::Normal => {
-                let (intersection, i) = self.get_cursor_intersection()?;
-                match intersection {
-                    Intersection::Edge(_) | Intersection::Inner => {
-                        renderer.clear(&self.shapes[i])?;
-                        self.shapes.remove(i);
-                    }
-                    _ => {}
+        if let Mode::Normal = self.mode {
+            let (intersection, i) = self.get_cursor_intersection()?;
+            match intersection {
+                Intersection::Edge(_) | Intersection::Inner => {
+                    renderer.clear(&self.shapes[i])?;
+                    self.shapes.remove(i);
                 }
+                _ => {}
             }
-            _ => {}
         }
 
         Ok(())
@@ -140,11 +148,8 @@ impl State {
     }
 
     pub fn handle_backspace(&mut self) -> std::io::Result<()> {
-        match &mut self.mode {
-            Mode::Text(rect) => {
-                rect.on_backspace()?;
-            }
-            _ => {}
+        if let Mode::Text(rect) = &mut self.mode {
+            rect.on_backspace()?;
         }
         Ok(())
     }

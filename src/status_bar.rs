@@ -22,7 +22,7 @@ impl StatusBar {
             Mode::Normal => {
                 self.mode_text = NORMAL;
             }
-            Mode::DrawRectangle(_) => {
+            Mode::DrawRectangle(_, _) => {
                 self.mode_text = DRAW;
             }
             Mode::DrawArrow(_) => {
