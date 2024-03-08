@@ -48,14 +48,14 @@ pub struct Point<T> {
     pub background: Color,
 }
 
-impl Into<Point<i32>> for Point<u16> {
-    fn into(self) -> Point<i32> {
+impl From<Point<u16>> for Point<i32> {
+    fn from(val: Point<u16>) -> Self {
         Point {
-            x: self.x as i32,
-            y: self.y as i32,
-            character: self.character,
-            foreground: self.foreground,
-            background: self.background,
+            x: val.x as i32,
+            y: val.y as i32,
+            character: val.character,
+            foreground: val.foreground,
+            background: val.background,
         }
     }
 }
@@ -93,79 +93,83 @@ pub enum EdgeIntersection {
 
 pub struct Renderer {
     state: Vec<Vec<(char, Color, Color)>>,
+    width: u16,
+    height: u16,
 }
 
 impl Renderer {
     pub fn new(width: u16, height: u16) -> Self {
-        let mut initial_state = vec![];
-        for _ in 0..width {
-            let mut cols = vec![];
-            for _ in 0..height {
-                cols.push((' ', Color::Empty, Color::EmptyBackground));
-            }
-            initial_state.push(cols);
-        }
-
         Self {
-            state: initial_state,
+            state: vec![],
+            width,
+            height,
         }
     }
 
-    pub fn render(&mut self, shape: &impl Draw) -> std::io::Result<()> {
+    pub fn start_frame(&mut self) {
+        for _ in 0..self.width {
+            let mut cols = vec![];
+            for _ in 0..self.height {
+                cols.push((' ', Color::Empty, Color::EmptyBackground));
+            }
+            self.state.push(cols);
+        }
+    }
+
+    pub fn finish_frame(&self) -> std::io::Result<()> {
         queue!(stdout(), cursor::SavePosition)?;
+        self.state
+            .iter()
+            .enumerate()
+            .map(|(x, row)| {
+                row.iter()
+                    .enumerate()
+                    .map(|(y, (character, foreground, background))| {
+                        queue!(
+                            stdout(),
+                            cursor::MoveTo(x as u16, y as u16),
+                            SetForegroundColor(get_default_color(foreground, true)),
+                            SetBackgroundColor(get_default_color(background, false)),
+                            Print(character)
+                        )?;
+                        std::io::Result::Ok(())
+                    })
+                    .collect::<std::io::Result<Vec<_>>>()
+            })
+            .collect::<std::io::Result<Vec<_>>>()?;
+        queue!(stdout(), cursor::RestorePosition)?;
+        Ok(())
+    }
+
+    pub fn render(&mut self, shape: &impl Draw) -> std::io::Result<()> {
         let hover = !matches!(shape.get_intersection()?, Intersection::None);
         let points = shape.draw(hover)?;
         for point in points {
             self.draw_at(point)?;
         }
-        queue!(stdout(), cursor::RestorePosition)?;
         Ok(())
     }
 
     pub fn render_sticky(&mut self, shape: &impl DrawSticky) -> std::io::Result<()> {
-        queue!(stdout(), cursor::SavePosition)?;
         let points = shape.draw()?;
         for point in points {
             self.draw_at(point.into())?;
         }
-        queue!(stdout(), cursor::RestorePosition)?;
         Ok(())
     }
 
     pub fn render_overlay(&mut self, overlay: &impl DrawOverlay) -> std::io::Result<()> {
         let (points, foreground, background) = overlay.draw();
-        queue!(stdout(), cursor::SavePosition)?;
-        if let Some(fg) = foreground {
-            queue!(stdout(), SetForegroundColor(get_default_color(fg, true)))?;
-        }
-        if let Some(bg) = background {
-            queue!(stdout(), SetBackgroundColor(get_default_color(bg, false)))?;
-        }
         for OverlayPoint { x, y } in points {
-            let (current_char, _, _) = self.state[x as usize][y as usize];
-            queue!(
-                stdout(),
-                cursor::MoveTo(x as u16, y as u16),
-                Print(current_char)
-            )?;
+            let (_, current_foreground, current_background) =
+                &mut self.state[x as usize][y as usize];
+            if let Some(fg) = foreground {
+                *current_foreground = fg;
+            }
+            if let Some(bg) = background {
+                *current_background = bg;
+            }
         }
-        queue!(stdout(), cursor::RestorePosition)?;
-        Ok(())
-    }
-
-    pub fn clear(&mut self, shape: &impl Draw) -> std::io::Result<()> {
-        queue!(stdout(), cursor::SavePosition)?;
-        let points = shape.clear()?;
-        for (x, y) in points {
-            self.draw_at(Point {
-                x,
-                y,
-                character: ' ',
-                foreground: Color::Empty,
-                background: Color::EmptyBackground,
-            })?;
-        }
-        queue!(stdout(), cursor::RestorePosition)?;
         Ok(())
     }
 
@@ -177,25 +181,14 @@ impl Renderer {
             foreground,
             background,
         } = point;
-        let (current_char, current_fg, current_bg) = self.state[x as usize][y as usize];
-
-        if current_char != character || foreground != current_fg || background != current_bg {
-            queue!(
-                stdout(),
-                cursor::MoveTo(x as u16, y as u16),
-                SetForegroundColor(get_default_color(foreground, true)),
-                SetBackgroundColor(get_default_color(background, false)),
-                Print(character)
-            )?;
-            self.state[x as usize][y as usize] = (character, foreground, background);
-        }
+        self.state[x as usize][y as usize] = (character, foreground, background);
 
         Ok(())
     }
 }
 
-fn get_default_color(color: Color, fg: bool) -> crossterm::style::Color {
-    let default = DEFAULT_COLORS.iter().find(|(c, _)| c == &color);
+fn get_default_color(color: &Color, fg: bool) -> crossterm::style::Color {
+    let default = DEFAULT_COLORS.iter().find(|(c, _)| c == color);
 
     if let Some((_, rgb)) = default {
         *rgb

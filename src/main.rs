@@ -65,7 +65,7 @@ fn main() -> std::io::Result<()> {
                         's' => save(&state, &file_name)?,
                         'i' => state.handle_insert()?,
                         'r' => state.handle_drag()?,
-                        'x' => state.handle_delete(&mut renderer)?,
+                        'x' => state.handle_delete()?,
                         'v' => state.handle_select()?,
                         _ => {}
                     },
@@ -79,6 +79,7 @@ fn main() -> std::io::Result<()> {
         }
 
         status_bar.update(&state.mode)?;
+        renderer.start_frame();
         renderer.render_sticky(&status_bar)?;
         renderer.render_sticky(&debug_panel)?;
         for shape in &state.shapes {
@@ -103,6 +104,8 @@ fn main() -> std::io::Result<()> {
                 renderer.render_overlay(selection)?;
             }
         }
+
+        renderer.finish_frame()?;
 
         stdout().flush()?;
     }

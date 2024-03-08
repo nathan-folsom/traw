@@ -12,7 +12,7 @@ use crate::{
     draw::{
         Draw,
         EdgeIntersection::{Corner, Side},
-        Intersection, Renderer,
+        Intersection,
     },
     mode::{Anchor, Mode, Selection},
     rectangle::Rectangle,
@@ -139,12 +139,11 @@ impl State {
         self.mode = mode;
     }
 
-    pub fn handle_delete(&mut self, renderer: &mut Renderer) -> std::io::Result<()> {
+    pub fn handle_delete(&mut self) -> std::io::Result<()> {
         if let Mode::Normal = self.mode {
             let (intersection, i) = self.get_cursor_intersection()?;
             match intersection {
                 Intersection::Edge(_) | Intersection::Inner => {
-                    renderer.clear(&self.shapes[i])?;
                     self.shapes.remove(i);
                 }
                 _ => {}
