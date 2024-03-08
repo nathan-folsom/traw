@@ -93,6 +93,7 @@ pub enum EdgeIntersection {
 
 pub struct Renderer {
     state: Vec<Vec<(char, Color, Color)>>,
+    prev_state: Vec<Vec<(char, Color, Color)>>,
     width: u16,
     height: u16,
 }
@@ -101,19 +102,27 @@ impl Renderer {
     pub fn new(width: u16, height: u16) -> Self {
         Self {
             state: vec![],
+            prev_state: vec![],
             width,
             height,
         }
     }
 
     pub fn start_frame(&mut self) {
+        let mut empty = vec![];
         for _ in 0..self.width {
             let mut cols = vec![];
             for _ in 0..self.height {
                 cols.push((' ', Color::Empty, Color::EmptyBackground));
             }
-            self.state.push(cols);
+            empty.push(cols.clone());
         }
+        if self.prev_state.is_empty() {
+            self.prev_state = empty.clone();
+        } else {
+            std::mem::swap(&mut self.prev_state, &mut self.state);
+        }
+        self.state = empty;
     }
 
     pub fn finish_frame(&self) -> std::io::Result<()> {
@@ -125,13 +134,19 @@ impl Renderer {
                 row.iter()
                     .enumerate()
                     .map(|(y, (character, foreground, background))| {
-                        queue!(
-                            stdout(),
-                            cursor::MoveTo(x as u16, y as u16),
-                            SetForegroundColor(get_default_color(foreground, true)),
-                            SetBackgroundColor(get_default_color(background, false)),
-                            Print(character)
-                        )?;
+                        let (prev_char, prev_foreground, prev_background) = self.prev_state[x][y];
+                        if character != &prev_char
+                            || foreground != &prev_foreground
+                            || background != &prev_background
+                        {
+                            queue!(
+                                stdout(),
+                                cursor::MoveTo(x as u16, y as u16),
+                                SetForegroundColor(get_default_color(foreground, true)),
+                                SetBackgroundColor(get_default_color(background, false)),
+                                Print(character)
+                            )?;
+                        }
                         std::io::Result::Ok(())
                     })
                     .collect::<std::io::Result<Vec<_>>>()

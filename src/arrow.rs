@@ -215,7 +215,7 @@ mod test {
         let mut arrow = Arrow::init();
         arrow.points = vec![(0, 0), (1, 0), (2, 0)];
 
-        let render = arrow.draw().unwrap();
+        let render = arrow.draw(false).unwrap();
         assert_eq!(render.len(), arrow.points.len() - 1);
     }
 

@@ -3,7 +3,7 @@ use std::io::{stdout, Write};
 use crossterm::{
     cursor,
     event::{self, KeyCode, KeyEvent},
-    execute,
+    execute, queue,
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
@@ -140,16 +140,16 @@ fn handle_motions(event: KeyEvent) -> std::io::Result<()> {
     if let KeyCode::Char(key) = event.code {
         match key {
             'h' => {
-                execute!(stdout(), cursor::MoveLeft(1))?;
+                queue!(stdout(), cursor::MoveLeft(1))?;
             }
             'j' => {
-                execute!(stdout(), cursor::MoveDown(1))?;
+                queue!(stdout(), cursor::MoveDown(1))?;
             }
             'k' => {
-                execute!(stdout(), cursor::MoveUp(1))?;
+                queue!(stdout(), cursor::MoveUp(1))?;
             }
             'l' => {
-                execute!(stdout(), cursor::MoveRight(1))?;
+                queue!(stdout(), cursor::MoveRight(1))?;
             }
             _ => {}
         }
