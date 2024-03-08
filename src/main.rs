@@ -69,10 +69,20 @@ fn main() -> std::io::Result<()> {
                         'v' => state.handle_select()?,
                         _ => {}
                     },
+                    Mode::Select(selection) => {
+                        if key == 'y' {
+                            renderer.handle_yank(selection);
+                        }
+                    }
                     _ => {}
                 },
 
-                KeyCode::Enter => state.handle_enter()?,
+                KeyCode::Enter => {
+                    if let Mode::Select(selection) = &state.mode {
+                        renderer.handle_yank(selection);
+                    }
+                    state.handle_enter()?;
+                }
                 KeyCode::Backspace => state.handle_backspace()?,
                 _ => {}
             }

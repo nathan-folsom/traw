@@ -1,11 +1,12 @@
 use std::io::stdout;
 
+use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::{
     cursor, queue,
     style::{Print, SetBackgroundColor, SetForegroundColor},
 };
 
-use crate::mode::Anchor;
+use crate::mode::{Anchor, Selection};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Color {
@@ -199,6 +200,21 @@ impl Renderer {
         self.state[x as usize][y as usize] = (character, foreground, background);
 
         Ok(())
+    }
+
+    pub fn handle_yank(&self, selection: &Selection) {
+        let mut ctx = ClipboardContext::new().unwrap();
+        let mut content = vec![];
+        for row in 0..selection.height {
+            for col in 0..selection.width {
+                let x = col + selection.x;
+                let y = row + selection.y;
+                let (character, _, _) = self.state[x as usize][y as usize];
+                content.push(character);
+            }
+            content.push('\n');
+        }
+        ctx.set_contents(content.iter().collect()).unwrap();
     }
 }
 
