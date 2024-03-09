@@ -114,16 +114,14 @@ impl State {
                 }
             }
             Mode::Text(_) => {
-                if let Mode::Text(rect) = std::mem::replace(&mut self.mode, Mode::Normal) {
+                if let Mode::Text(rect) = std::mem::take(&mut self.mode) {
                     self.shapes.push(Shape::Box(rect));
                     queue!(stdout(), cursor::SetCursorStyle::SteadyBlock)?;
-                    self.enter_mode(Mode::Normal);
                 }
             }
             Mode::DrawArrow(_) => {
                 if let Mode::DrawArrow(arrow) = std::mem::take(&mut self.mode) {
                     self.shapes.push(Shape::Line(arrow));
-                    self.enter_mode(Mode::Normal);
                 }
             }
             Mode::Select(_) => {
