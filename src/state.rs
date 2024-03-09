@@ -34,41 +34,33 @@ impl State {
     }
 
     pub fn handle_insert(&mut self) -> std::io::Result<()> {
-        match &self.mode {
-            Mode::DrawRectangle(_, _) => {
-                if let Mode::DrawRectangle(rect, _) = std::mem::take(&mut self.mode) {
-                    self.enter_text_mode(rect)?;
-                }
-            }
-            Mode::Normal => {
-                let (x, y) = cursor::position()?;
-                let (intersection, i) = self.get_cursor_intersection()?;
+        if let Mode::Normal = &self.mode {
+            let (x, y) = cursor::position()?;
+            let (intersection, i) = self.get_cursor_intersection()?;
 
-                match intersection {
-                    Intersection::None => {
-                        self.enter_mode(Mode::DrawRectangle(
-                            Rectangle::new_at(x as i32, y as i32),
-                            Anchor::BottomRight,
-                        ));
-                    }
-                    Intersection::Edge(Side) => {
-                        self.enter_mode(Mode::DrawArrow(Arrow::init()));
-                    }
-                    Intersection::Inner => {
-                        let edited = self.shapes.remove(i);
-                        match edited {
-                            Shape::Box(rectangle) => {
-                                self.enter_text_mode(rectangle)?;
-                            }
-                            Shape::Line(arrow) => {
-                                self.enter_mode(Mode::DrawArrow(arrow));
-                            }
+            match intersection {
+                Intersection::None => {
+                    self.enter_mode(Mode::DrawRectangle(
+                        Rectangle::new_at(x as i32, y as i32),
+                        Anchor::BottomRight,
+                    ));
+                }
+                Intersection::Edge(Side) => {
+                    self.enter_mode(Mode::DrawArrow(Arrow::init()));
+                }
+                Intersection::Inner => {
+                    let edited = self.shapes.remove(i);
+                    match edited {
+                        Shape::Box(rectangle) => {
+                            self.enter_text_mode(rectangle)?;
+                        }
+                        Shape::Line(arrow) => {
+                            self.enter_mode(Mode::DrawArrow(arrow));
                         }
                     }
-                    _ => {}
                 }
+                _ => {}
             }
-            _ => {}
         }
 
         Ok(())
@@ -99,35 +91,29 @@ impl State {
     }
 
     pub fn handle_enter(&mut self) -> std::io::Result<()> {
-        match &self.mode {
-            Mode::DrawRectangle(_, _) => {
-                if let Mode::DrawRectangle(rect, _) = std::mem::take(&mut self.mode) {
-                    // Only start editing text if this is a new rectangle
-                    if rect.text.is_empty() {
-                        self.enter_text_mode(rect)?;
-                    } else if let Mode::DrawRectangle(rect, _) =
-                        std::mem::replace(&mut self.mode, Mode::Normal)
-                    {
-                        self.shapes.push(Shape::Box(rect));
-                        self.enter_mode(Mode::Normal);
-                    }
-                }
-            }
-            Mode::Text(_) => {
-                if let Mode::Text(rect) = std::mem::take(&mut self.mode) {
+        match std::mem::take(&mut self.mode) {
+            Mode::DrawRectangle(rect, _) => {
+                // Only start editing text if this is a new rectangle
+                if rect.text.is_empty() {
+                    self.enter_text_mode(rect)?;
+                } else if let Mode::DrawRectangle(rect, _) =
+                    std::mem::replace(&mut self.mode, Mode::Normal)
+                {
                     self.shapes.push(Shape::Box(rect));
-                    queue!(stdout(), cursor::SetCursorStyle::SteadyBlock)?;
+                    self.enter_mode(Mode::Normal);
                 }
             }
-            Mode::DrawArrow(_) => {
-                if let Mode::DrawArrow(arrow) = std::mem::take(&mut self.mode) {
-                    self.shapes.push(Shape::Line(arrow));
-                }
+            Mode::Text(rect) => {
+                self.shapes.push(Shape::Box(rect));
+                queue!(stdout(), cursor::SetCursorStyle::SteadyBlock)?;
+            }
+            Mode::DrawArrow(arrow) => {
+                self.shapes.push(Shape::Line(arrow));
             }
             Mode::Select(_) => {
                 self.enter_mode(Mode::Normal);
             }
-            _ => {}
+            Mode::Normal => {}
         }
 
         Ok(())
