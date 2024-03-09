@@ -120,9 +120,11 @@ impl State {
                     self.enter_mode(Mode::Normal);
                 }
             }
-            Mode::DrawArrow(arrow) => {
-                self.shapes.push(Shape::Line(arrow.clone()));
-                self.enter_mode(Mode::Normal);
+            Mode::DrawArrow(_) => {
+                if let Mode::DrawArrow(arrow) = std::mem::take(&mut self.mode) {
+                    self.shapes.push(Shape::Line(arrow));
+                    self.enter_mode(Mode::Normal);
+                }
             }
             Mode::Select(_) => {
                 self.enter_mode(Mode::Normal);
