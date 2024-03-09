@@ -35,8 +35,10 @@ impl State {
 
     pub fn handle_insert(&mut self) -> std::io::Result<()> {
         match &self.mode {
-            Mode::DrawRectangle(rect, _) => {
-                self.enter_text_mode(rect.clone())?;
+            Mode::DrawRectangle(_, _) => {
+                if let Mode::DrawRectangle(rect, _) = std::mem::take(&mut self.mode) {
+                    self.enter_text_mode(rect)?;
+                }
             }
             Mode::Normal => {
                 let (x, y) = cursor::position()?;
@@ -98,19 +100,25 @@ impl State {
 
     pub fn handle_enter(&mut self) -> std::io::Result<()> {
         match &self.mode {
-            Mode::DrawRectangle(rect, _) => {
-                // Only start editing text if this is a new rectangle
-                if rect.text.is_empty() {
-                    self.enter_text_mode(rect.clone())?;
-                } else {
-                    self.shapes.push(Shape::Box(rect.clone()));
-                    self.enter_mode(Mode::Normal);
+            Mode::DrawRectangle(_, _) => {
+                if let Mode::DrawRectangle(rect, _) = std::mem::take(&mut self.mode) {
+                    // Only start editing text if this is a new rectangle
+                    if rect.text.is_empty() {
+                        self.enter_text_mode(rect)?;
+                    } else if let Mode::DrawRectangle(rect, _) =
+                        std::mem::replace(&mut self.mode, Mode::Normal)
+                    {
+                        self.shapes.push(Shape::Box(rect));
+                        self.enter_mode(Mode::Normal);
+                    }
                 }
             }
-            Mode::Text(rect) => {
-                self.shapes.push(Shape::Box(rect.clone()));
-                queue!(stdout(), cursor::SetCursorStyle::SteadyBlock)?;
-                self.enter_mode(Mode::Normal);
+            Mode::Text(_) => {
+                if let Mode::Text(rect) = std::mem::replace(&mut self.mode, Mode::Normal) {
+                    self.shapes.push(Shape::Box(rect));
+                    queue!(stdout(), cursor::SetCursorStyle::SteadyBlock)?;
+                    self.enter_mode(Mode::Normal);
+                }
             }
             Mode::DrawArrow(arrow) => {
                 self.shapes.push(Shape::Line(arrow.clone()));

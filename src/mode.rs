@@ -6,8 +6,9 @@ use crate::{
     rectangle::{Drag, Rectangle},
 };
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub enum Mode {
+    #[default]
     Normal,
     DrawRectangle(Rectangle, Anchor),
     DrawArrow(Arrow),

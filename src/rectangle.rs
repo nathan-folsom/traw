@@ -18,7 +18,7 @@ use crate::{
     mode::Anchor,
 };
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Rectangle {
     pub x: i32,
     pub y: i32,
