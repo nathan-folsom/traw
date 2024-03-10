@@ -25,6 +25,11 @@ traw [options]
 - 'x' (normal mode) - Delete shape under cursor
 - 's' (normal mode) - Save current file
 - 'v' (normal mode) - Enter select mode
+- 'y' (select mode) - Copy selection to system clipboard
+- 'enter' - Transition to next mode
+  - (select mode) Copy selection and end select
+  - (draw mode) End draw mode
+
 
 ## File 
 
@@ -33,5 +38,9 @@ traw [options]
 Things that are useful and should be added:
 
 - Count modifiers: e.g. '10l' to go 10 cols to the right
-- Select mode: 'v', move cursor then 'y' to copy to clipboard
+- Word motions: e.g. 'w' to go to start of next object
+- Infinite canvas: i.e. terminal is a window onto a larger space, instead of representing the whole space.
+- Toggle debug pane
 - Move boxes
+- Configurable keybindings
+- Background grid: i.e. show some sort of guidelines
