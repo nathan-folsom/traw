@@ -2,7 +2,7 @@ use std::io::{stdout, Write};
 
 use crossterm::{
     cursor,
-    event::{self, KeyCode, KeyEvent},
+    event::{self, KeyCode},
     execute, queue,
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
@@ -50,11 +50,6 @@ fn main() -> std::io::Result<()> {
 
     loop {
         if let event::Event::Key(key_event) = event::read()? {
-            match state.mode {
-                Mode::Text(_) => {}
-                _ => handle_motions(key_event)?,
-            }
-
             match key_event.code {
                 KeyCode::Char(key) => match &mut state.mode {
                     Mode::Text(rect) => {
@@ -67,14 +62,17 @@ fn main() -> std::io::Result<()> {
                         'r' => state.handle_drag()?,
                         'x' => state.handle_delete()?,
                         'v' => state.handle_select()?,
-                        _ => {}
+                        _ => handle_motions(key)?,
                     },
                     Mode::Select(selection) => {
                         if key == 'y' {
                             renderer.handle_yank(selection);
                         }
+                        handle_motions(key)?;
                     }
-                    _ => {}
+                    _ => {
+                        handle_motions(key)?;
+                    }
                 },
 
                 KeyCode::Enter => {
@@ -92,9 +90,7 @@ fn main() -> std::io::Result<()> {
         renderer.start_frame();
         renderer.render_sticky(&status_bar)?;
         renderer.render_sticky(&debug_panel)?;
-        for shape in &state.shapes {
-            renderer.render(shape)?;
-        }
+        renderer.render(&state)?;
 
         match &mut state.mode {
             Mode::Normal => {}
@@ -146,23 +142,21 @@ fn end() -> std::io::Result<()> {
     Ok(())
 }
 
-fn handle_motions(event: KeyEvent) -> std::io::Result<()> {
-    if let KeyCode::Char(key) = event.code {
-        match key {
-            'h' => {
-                queue!(stdout(), cursor::MoveLeft(1))?;
-            }
-            'j' => {
-                queue!(stdout(), cursor::MoveDown(1))?;
-            }
-            'k' => {
-                queue!(stdout(), cursor::MoveUp(1))?;
-            }
-            'l' => {
-                queue!(stdout(), cursor::MoveRight(1))?;
-            }
-            _ => {}
+fn handle_motions(key: char) -> std::io::Result<()> {
+    match key {
+        'h' => {
+            queue!(stdout(), cursor::MoveLeft(1))?;
         }
+        'j' => {
+            queue!(stdout(), cursor::MoveDown(1))?;
+        }
+        'k' => {
+            queue!(stdout(), cursor::MoveUp(1))?;
+        }
+        'l' => {
+            queue!(stdout(), cursor::MoveRight(1))?;
+        }
+        _ => {}
     }
 
     Ok(())

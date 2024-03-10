@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     arrow::Arrow,
-    draw::{Draw, Point},
+    draw::{CursorIntersect, Draw, Point},
     rectangle::Rectangle,
 };
 
@@ -13,18 +13,15 @@ pub enum Shape {
 }
 
 impl Draw for Shape {
-    fn draw(&self, hover: bool) -> std::io::Result<Vec<Point<i32>>> {
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
         match self {
-            Shape::Line(shape) => shape.draw(hover),
-            Shape::Box(shape) => shape.draw(hover),
+            Shape::Line(shape) => shape.draw(),
+            Shape::Box(shape) => shape.draw(),
         }
     }
-    fn clear(&self) -> std::io::Result<Vec<(i32, i32)>> {
-        match self {
-            Shape::Line(shape) => shape.clear(),
-            Shape::Box(shape) => shape.clear(),
-        }
-    }
+}
+
+impl CursorIntersect for Shape {
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
         match self {
             Shape::Line(shape) => shape.get_intersection(),

@@ -10,9 +10,9 @@ use crate::{
     arrow::Arrow,
     debug_panel::debug,
     draw::{
-        Draw,
+        CursorIntersect, Draw,
         EdgeIntersection::{Corner, Side},
-        Intersection,
+        Intersection, Point,
     },
     mode::{Anchor, Mode, Selection},
     rectangle::Rectangle,
@@ -167,5 +167,21 @@ impl State {
             rect.on_backspace()?;
         }
         Ok(())
+    }
+}
+
+impl Draw for State {
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
+        let mut points = vec![];
+        self.shapes
+            .iter()
+            .map(|shape| {
+                for point in shape.draw()? {
+                    points.push(point);
+                }
+                Ok(())
+            })
+            .collect::<std::io::Result<Vec<_>>>()?;
+        Ok(points)
     }
 }

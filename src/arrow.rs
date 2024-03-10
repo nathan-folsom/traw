@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     characters::{CORNER_1, CORNER_2, CORNER_3, CORNER_4, HORIZONTAL_BAR, VERTICAL_BAR},
-    draw::{Color, Draw, Intersection, Point},
+    draw::{Color, CursorIntersect, Draw, EdgeIntersection, Intersection, Point},
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -32,7 +32,8 @@ impl Arrow {
 }
 
 impl Draw for Arrow {
-    fn draw(&self, hover: bool) -> std::io::Result<Vec<Point<i32>>> {
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
+        let hover = self.hovered()?;
         let mut points = vec![];
 
         let foreground = Color::Border;
@@ -91,32 +92,18 @@ impl Draw for Arrow {
 
         Ok(points)
     }
+}
 
+impl CursorIntersect for Arrow {
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
         let (c_x, c_y) = cursor::position()?;
-
-        for Point {
-            x, y, character, ..
-        } in self.draw(false)?
-        {
-            if x as u16 != c_x || y as u16 != c_y {
+        for (x, y) in &self.points {
+            if *x as u16 != c_x || *y as u16 != c_y {
                 continue;
             }
-
-            if character == HORIZONTAL_BAR || character == VERTICAL_BAR {
-                return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Side));
-            }
-
-            return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Corner(
-                None,
-            )));
+            return Ok(Intersection::Edge(EdgeIntersection::Side));
         }
-
         Ok(Intersection::None)
-    }
-
-    fn clear(&self) -> std::io::Result<Vec<(i32, i32)>> {
-        Ok(self.points.clone())
     }
 }
 

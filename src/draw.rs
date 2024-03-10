@@ -62,9 +62,14 @@ impl From<Point<u16>> for Point<i32> {
 }
 
 pub trait Draw {
-    fn draw(&self, hover: bool) -> std::io::Result<Vec<Point<i32>>>;
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>>;
+}
+
+pub trait CursorIntersect {
     fn get_intersection(&self) -> std::io::Result<Intersection>;
-    fn clear(&self) -> std::io::Result<Vec<(i32, i32)>>;
+    fn hovered(&self) -> std::io::Result<bool> {
+        Ok(!matches!(self.get_intersection()?, Intersection::None))
+    }
 }
 
 pub trait DrawSticky {
@@ -158,8 +163,7 @@ impl Renderer {
     }
 
     pub fn render(&mut self, shape: &impl Draw) -> std::io::Result<()> {
-        let hover = !matches!(shape.get_intersection()?, Intersection::None);
-        let points = shape.draw(hover)?;
+        let points = shape.draw()?;
         for point in points {
             self.draw_at(point)?;
         }

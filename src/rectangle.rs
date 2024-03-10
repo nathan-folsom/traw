@@ -14,7 +14,7 @@ use crate::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
-    draw::{Color, Draw, EdgeIntersection::Corner, Intersection, Point},
+    draw::{Color, CursorIntersect, Draw, EdgeIntersection::Corner, Intersection, Point},
     mode::Anchor,
 };
 
@@ -68,7 +68,8 @@ impl Rectangle {
 }
 
 impl Draw for Rectangle {
-    fn draw(&self, hover: bool) -> std::io::Result<Vec<Point<i32>>> {
+    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
+        let hover = self.hovered()?;
         let mut points = vec![];
         let foreground = Color::Border;
         let background = {
@@ -168,7 +169,9 @@ impl Draw for Rectangle {
 
         Ok(points)
     }
+}
 
+impl CursorIntersect for Rectangle {
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
         let (cursor_x, cursor_y) = cursor::position()?;
 
@@ -210,16 +213,6 @@ impl Draw for Rectangle {
         }
 
         Ok(Intersection::Inner)
-    }
-
-    fn clear(&self) -> std::io::Result<Vec<(i32, i32)>> {
-        let mut points = vec![];
-        for x in 0..self.width {
-            for y in 0..self.height {
-                points.push((x + self.x, y + self.y))
-            }
-        }
-        Ok(points)
     }
 }
 
@@ -301,25 +294,7 @@ enum Shrink {
 
 #[cfg(test)]
 mod test {
-    use crate::draw::Draw;
-
     use super::Rectangle;
-
-    #[test]
-    fn should_clear() {
-        let rect = Rectangle {
-            x: 5,
-            y: 5,
-            width: 2,
-            height: 2,
-            shrink: super::Shrink::None,
-            text: vec![],
-        };
-        let clear = rect.clear().unwrap();
-        let expected_clear = vec![(5, 5), (5, 6), (6, 5), (6, 6)];
-        assert_eq!(expected_clear.len(), clear.len());
-        assert_eq!(clear, expected_clear);
-    }
 
     #[test]
     fn should_get_cursor_position_when_editing_text() {
