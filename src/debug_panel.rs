@@ -25,26 +25,28 @@ impl DrawSticky for DebugPanel {
         let (w, h) = terminal::size()?;
         let mut points = vec![];
 
-        let messages = unsafe { DEBUG.get_or_init(|| vec![]) };
+        let messages = unsafe { DEBUG.get_or_init(Vec::new) };
         for y in 0..HEIGHT {
-            let end_offset = HEIGHT - y;
-            if end_offset > messages.len() {
-                continue;
-            }
-            if let Some(message) = messages.get(messages.len() - end_offset) {
-                for x in 0..w {
-                    let character = match message.chars().nth(x as usize) {
-                        Some(c) => c,
-                        None => ' ',
-                    };
-                    points.push(Point {
-                        x,
-                        y: h - 10 + y as u16,
-                        character,
-                        foreground: crate::draw::Color::Empty,
-                        background: crate::draw::Color::EmptyBackground,
-                    });
+            let message_idx = messages.len().checked_sub(HEIGHT - y);
+            let message = match message_idx {
+                Some(i) => {
+                    if let Some(m) = messages.get(i) {
+                        m.clone()
+                    } else {
+                        "".to_string()
+                    }
                 }
+                None => "".to_string(),
+            };
+            for x in 0..w {
+                let character = message.chars().nth(x as usize).unwrap_or(' ');
+                points.push(Point {
+                    x,
+                    y: h - 10 + y as u16,
+                    character,
+                    foreground: crate::draw::Color::Debug,
+                    background: crate::draw::Color::DebugBackground,
+                });
             }
         }
 

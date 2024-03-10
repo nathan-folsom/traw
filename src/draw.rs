@@ -3,7 +3,7 @@ use std::io::stdout;
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::{
     cursor, queue,
-    style::{Print, SetBackgroundColor, SetForegroundColor},
+    style::{Color::Rgb, Print, SetBackgroundColor, SetForegroundColor},
 };
 
 use crate::mode::{Anchor, Selection};
@@ -15,27 +15,42 @@ pub enum Color {
     Border,
     BorderBackground,
     BorderBackgroundHover,
+    Debug,
+    DebugBackground,
 }
 
-const DEFAULT_COLORS: [(Color, crossterm::style::Color); 3] = [
+const DEFAULT_COLORS: [(Color, crossterm::style::Color); 5] = [
     (
         Color::Border,
-        crossterm::style::Color::Rgb {
+        Rgb {
             r: 255,
             g: 255,
             b: 255,
         },
     ),
-    (
-        Color::BorderBackground,
-        crossterm::style::Color::Rgb { r: 0, g: 0, b: 0 },
-    ),
+    (Color::BorderBackground, Rgb { r: 0, g: 0, b: 0 }),
     (
         Color::BorderBackgroundHover,
-        crossterm::style::Color::Rgb {
+        Rgb {
             r: 70,
             g: 70,
             b: 70,
+        },
+    ),
+    (
+        Color::Debug,
+        Rgb {
+            r: 240,
+            g: 240,
+            b: 240,
+        },
+    ),
+    (
+        Color::DebugBackground,
+        Rgb {
+            r: 40,
+            g: 40,
+            b: 40,
         },
     ),
 ];
@@ -228,12 +243,12 @@ fn get_default_color(color: &Color, fg: bool) -> crossterm::style::Color {
     if let Some((_, rgb)) = default {
         *rgb
     } else if fg {
-        crossterm::style::Color::Rgb {
+        Rgb {
             r: 255,
             g: 255,
             b: 255,
         }
     } else {
-        crossterm::style::Color::Rgb { r: 0, g: 0, b: 0 }
+        Rgb { r: 0, g: 0, b: 0 }
     }
 }
