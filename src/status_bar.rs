@@ -9,6 +9,7 @@ use crate::{
 pub struct StatusBar {
     mode_text: &'static str,
     cursor_text: String,
+    y: u16,
 }
 
 const NORMAL: &str = "Normal";
@@ -18,7 +19,7 @@ const ARROW: &str = "Arrow";
 const SELECT: &str = "Select";
 
 impl StatusBar {
-    pub fn update(&mut self, mode: &Mode) -> std::io::Result<()> {
+    pub fn update(&mut self, mode: &Mode, y_offset: u16) -> std::io::Result<()> {
         self.mode_text = match mode {
             Mode::Normal => NORMAL,
             Mode::DrawRectangle(_, _) => DRAW,
@@ -29,6 +30,7 @@ impl StatusBar {
 
         let (c_x, c_y) = cursor::position()?;
         self.cursor_text = format!("{}:{}", c_x, c_y);
+        self.y = y_offset + 1;
 
         Ok(())
     }
@@ -62,7 +64,7 @@ impl DrawSticky for StatusBar {
 
             row.push(Point {
                 x,
-                y: h - 11,
+                y: h - self.y,
                 character: next_char,
                 foreground: crate::draw::Color::Empty,
                 background: crate::draw::Color::EmptyBackground,

@@ -29,6 +29,7 @@ traw [options]
 - 'enter' - Transition to next mode
   - (select mode) Copy selection and end select
   - (draw mode) End draw mode
+- 'd' (normal mode) - Toggle debug panel
 
 
 ## File 

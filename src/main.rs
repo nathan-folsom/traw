@@ -34,13 +34,14 @@ fn main() -> std::io::Result<()> {
     let mut status_bar = StatusBar::default();
     let debug_panel = DebugPanel::default();
     let path_arg = std::env::args().nth(1);
+    let mut debug_enabled = false;
 
     let mut file_name = "unnamed.traw".to_string();
 
     if let Some(path) = path_arg {
         file_name = path;
         state = load(&file_name)?;
-        status_bar.update(&state.mode)?;
+        status_bar.update(&state.mode, 0)?;
         renderer.render_sticky(&status_bar)?;
         for shape in &state.shapes {
             renderer.render(shape)?;
@@ -62,6 +63,7 @@ fn main() -> std::io::Result<()> {
                         'r' => state.handle_drag()?,
                         'x' => state.handle_delete()?,
                         'v' => state.handle_select()?,
+                        'd' => debug_enabled = !debug_enabled,
                         _ => handle_motions(key)?,
                     },
                     Mode::Select(selection) => {
@@ -86,10 +88,18 @@ fn main() -> std::io::Result<()> {
             }
         }
 
-        status_bar.update(&state.mode)?;
+        status_bar.update(&state.mode, {
+            if debug_enabled {
+                10
+            } else {
+                0
+            }
+        })?;
         renderer.start_frame();
         renderer.render_sticky(&status_bar)?;
-        renderer.render_sticky(&debug_panel)?;
+        if debug_enabled {
+            renderer.render_sticky(&debug_panel)?;
+        }
         renderer.render(&state)?;
 
         match &mut state.mode {
