@@ -3,7 +3,7 @@ use std::io::stdout;
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::{
     cursor, queue,
-    style::{Color::Rgb, Print, SetBackgroundColor, SetForegroundColor},
+    style::{Print, SetBackgroundColor, SetForegroundColor},
 };
 
 use crate::mode::{Anchor, Selection};
@@ -19,41 +19,20 @@ pub enum Color {
     DebugBackground,
 }
 
-const DEFAULT_COLORS: [(Color, crossterm::style::Color); 5] = [
-    (
-        Color::Border,
-        Rgb {
-            r: 255,
-            g: 255,
-            b: 255,
-        },
-    ),
-    (Color::BorderBackground, Rgb { r: 0, g: 0, b: 0 }),
-    (
-        Color::BorderBackgroundHover,
-        Rgb {
-            r: 70,
-            g: 70,
-            b: 70,
-        },
-    ),
-    (
-        Color::Debug,
-        Rgb {
-            r: 240,
-            g: 240,
-            b: 240,
-        },
-    ),
-    (
-        Color::DebugBackground,
-        Rgb {
-            r: 40,
-            g: 40,
-            b: 40,
-        },
-    ),
-];
+impl From<&Color> for crossterm::style::Color {
+    fn from(value: &Color) -> Self {
+        let (r, g, b) = match value {
+            Color::Border => (255, 255, 255),
+            Color::BorderBackground => (0, 0, 0),
+            Color::BorderBackgroundHover => (70, 70, 70),
+            Color::Debug => (240, 240, 240),
+            Color::DebugBackground => (40, 40, 40),
+            Color::Empty => (255, 255, 255),
+            Color::EmptyBackground => (0, 0, 0),
+        };
+        Self::Rgb { r, g, b }
+    }
+}
 
 #[derive(Debug)]
 pub struct Point<T> {
@@ -163,8 +142,8 @@ impl Renderer {
                             queue!(
                                 stdout(),
                                 cursor::MoveTo(x as u16, y as u16),
-                                SetForegroundColor(get_default_color(foreground, true)),
-                                SetBackgroundColor(get_default_color(background, false)),
+                                SetForegroundColor(foreground.into()),
+                                SetBackgroundColor(background.into()),
                                 Print(character)
                             )?;
                         }
@@ -234,21 +213,5 @@ impl Renderer {
             content.push('\n');
         }
         ctx.set_contents(content.iter().collect()).unwrap();
-    }
-}
-
-fn get_default_color(color: &Color, fg: bool) -> crossterm::style::Color {
-    let default = DEFAULT_COLORS.iter().find(|(c, _)| c == color);
-
-    if let Some((_, rgb)) = default {
-        *rgb
-    } else if fg {
-        Rgb {
-            r: 255,
-            g: 255,
-            b: 255,
-        }
-    } else {
-        Rgb { r: 0, g: 0, b: 0 }
     }
 }
