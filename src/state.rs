@@ -23,6 +23,7 @@ use crate::{
 pub struct State {
     pub shapes: Vec<Shape>,
     pub mode: Mode,
+    pub debug_enabled: bool,
 }
 
 impl State {
@@ -30,6 +31,7 @@ impl State {
         Self {
             shapes: vec![],
             mode: Mode::Normal,
+            debug_enabled: false,
         }
     }
 

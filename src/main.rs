@@ -1,4 +1,4 @@
-use std::io::{stdout, Write};
+use std::io::stdout;
 
 use crossterm::{
     cursor,
@@ -7,14 +7,10 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
-use debug_panel::DebugPanel;
 use draw::Renderer;
-use grid_background::GridBackground;
 use mode::Mode;
 use persistence::{load, save};
-use rectangle::Drag;
 use state::State;
-use status_bar::StatusBar;
 
 mod arrow;
 mod characters;
@@ -33,9 +29,6 @@ fn main() -> std::io::Result<()> {
     let mut state = State::init();
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
-    let mut status_bar = StatusBar::default();
-    let grid_background = GridBackground::new();
-    let debug_panel = DebugPanel::default();
     let path_arg = std::env::args().nth(1);
     let mut debug_enabled = false;
 
@@ -44,13 +37,9 @@ fn main() -> std::io::Result<()> {
     if let Some(path) = path_arg {
         file_name = path;
         state = load(&file_name)?;
-        status_bar.update(&state.mode, 0)?;
-        renderer.render_sticky(&status_bar)?;
-        for shape in &state.shapes {
-            renderer.render(shape)?;
-        }
-        stdout().flush()?;
     }
+
+    renderer.render_frame(&mut state)?;
 
     loop {
         if let event::Event::Key(key_event) = event::read()? {
@@ -91,43 +80,7 @@ fn main() -> std::io::Result<()> {
             }
         }
 
-        status_bar.update(&state.mode, {
-            if debug_enabled {
-                10
-            } else {
-                0
-            }
-        })?;
-        renderer.start_frame();
-        renderer.render(&grid_background)?;
-        renderer.render_sticky(&status_bar)?;
-        if debug_enabled {
-            renderer.render_sticky(&debug_panel)?;
-        }
-        renderer.render(&state)?;
-
-        match &mut state.mode {
-            Mode::Normal => {}
-            Mode::DrawRectangle(rect, anchor) => {
-                rect.drag_corner(anchor)?;
-                renderer.render(rect)?;
-            }
-            Mode::Text(rect) => {
-                renderer.render(rect)?;
-            }
-            Mode::DrawArrow(arrow) => {
-                arrow.update(cursor::position()?);
-                renderer.render(arrow)?;
-            }
-            Mode::Select(selection) => {
-                selection.drag_corner(&mode::Anchor::BottomRight)?;
-                renderer.render_overlay(selection)?;
-            }
-        }
-
-        renderer.finish_frame()?;
-
-        stdout().flush()?;
+        renderer.render_frame(&mut state)?;
     }
 
     end()?;

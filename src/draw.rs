@@ -1,4 +1,4 @@
-use std::io::stdout;
+use std::io::{stdout, Write};
 
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::{
@@ -6,7 +6,14 @@ use crossterm::{
     style::{Print, SetBackgroundColor, SetForegroundColor},
 };
 
-use crate::mode::{Anchor, Selection};
+use crate::{
+    debug_panel::DebugPanel,
+    grid_background::GridBackground,
+    mode::{Anchor, Mode, Selection},
+    rectangle::Drag,
+    state::State,
+    status_bar::StatusBar,
+};
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum Color {
@@ -96,6 +103,9 @@ pub enum EdgeIntersection {
 pub struct Renderer {
     state: Vec<Vec<(char, Color, Color)>>,
     prev_state: Vec<Vec<(char, Color, Color)>>,
+    status_bar: StatusBar,
+    grid_background: GridBackground,
+    debug_panel: DebugPanel,
     width: u16,
     height: u16,
 }
@@ -105,6 +115,9 @@ impl Renderer {
         Self {
             state: vec![],
             prev_state: vec![],
+            status_bar: Default::default(),
+            grid_background: GridBackground::new(),
+            debug_panel: Default::default(),
             width,
             height,
         }
@@ -158,16 +171,14 @@ impl Renderer {
         Ok(())
     }
 
-    pub fn render(&mut self, shape: &impl Draw) -> std::io::Result<()> {
-        let points = shape.draw()?;
+    pub fn render(&mut self, points: Vec<Point<i32>>) -> std::io::Result<()> {
         for point in points {
             self.draw_at(point)?;
         }
         Ok(())
     }
 
-    pub fn render_sticky(&mut self, shape: &impl DrawSticky) -> std::io::Result<()> {
-        let points = shape.draw()?;
+    pub fn render_sticky(&mut self, points: Vec<Point<u16>>) -> std::io::Result<()> {
         for point in points {
             self.draw_at(point.into())?;
         }
@@ -222,5 +233,45 @@ impl Renderer {
             content.push('\n');
         }
         ctx.set_contents(content.iter().collect()).unwrap();
+    }
+
+    pub fn render_frame(&mut self, state: &mut State) -> std::io::Result<()> {
+        self.status_bar.update(&state.mode, {
+            if state.debug_enabled {
+                10
+            } else {
+                0
+            }
+        })?;
+        self.start_frame();
+        self.render(self.grid_background.draw()?)?;
+        self.render_sticky(self.status_bar.draw()?)?;
+        if state.debug_enabled {
+            self.render_sticky(self.debug_panel.draw()?)?;
+        }
+        self.render(state.draw()?)?;
+        match &mut state.mode {
+            Mode::Normal => {}
+            Mode::DrawRectangle(rect, anchor) => {
+                rect.drag_corner(anchor)?;
+                self.render(rect.draw()?)?;
+            }
+            Mode::Text(rect) => {
+                self.render(rect.draw()?)?;
+            }
+            Mode::DrawArrow(arrow) => {
+                arrow.update(cursor::position()?);
+                self.render(arrow.draw()?)?;
+            }
+            Mode::Select(selection) => {
+                selection.drag_corner(&Anchor::BottomRight)?;
+                self.render_overlay(selection)?;
+            }
+        }
+
+        self.finish_frame()?;
+
+        stdout().flush()?;
+        Ok(())
     }
 }
