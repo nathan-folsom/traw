@@ -45,3 +45,11 @@ Things that are useful and should be added:
 - Move boxes
 - Configurable keybindings
 - Background grid: i.e. show some sort of guidelines
+- Use junction characters where arrows intersect boxes
+- Box text justification and alignment
+- Flexboxy layout
+- Undo/redo
+- Command line docs
+- Build/distribution
+- Hover effects: e.g. change char under cursor if action is available
+- Animations: e.g. hover background transition instead of instant change
