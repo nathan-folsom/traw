@@ -17,6 +17,7 @@ pub enum Color {
     BorderBackgroundHover,
     Debug,
     DebugBackground,
+    Grid,
 }
 
 impl From<&Color> for crossterm::style::Color {
@@ -29,6 +30,7 @@ impl From<&Color> for crossterm::style::Color {
             Color::DebugBackground => (40, 40, 40),
             Color::Empty => (255, 255, 255),
             Color::EmptyBackground => (0, 0, 0),
+            Color::Grid => (100, 100, 40),
         };
         Self::Rgb { r, g, b }
     }
@@ -207,7 +209,14 @@ impl Renderer {
             for col in 0..selection.width {
                 let x = col + selection.x;
                 let y = row + selection.y;
-                let (character, _, _) = self.state[x as usize][y as usize];
+                let (character, foreground, background) = self.state[x as usize][y as usize];
+                let is_background = matches!(foreground, Color::Grid)
+                    && matches!(background, Color::EmptyBackground);
+                if is_background {
+                    // Don't output background characters, they are purely aesthetic and won't
+                    // make as much visual sense without the whole window for context
+                    continue;
+                }
                 content.push(character);
             }
             content.push('\n');

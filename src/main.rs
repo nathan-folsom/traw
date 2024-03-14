@@ -9,6 +9,7 @@ use crossterm::{
 };
 use debug_panel::DebugPanel;
 use draw::Renderer;
+use grid_background::GridBackground;
 use mode::Mode;
 use persistence::{load, save};
 use rectangle::Drag;
@@ -19,6 +20,7 @@ mod arrow;
 mod characters;
 mod debug_panel;
 mod draw;
+mod grid_background;
 mod mode;
 mod persistence;
 mod rectangle;
@@ -32,6 +34,7 @@ fn main() -> std::io::Result<()> {
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
     let mut status_bar = StatusBar::default();
+    let grid_background = GridBackground::new();
     let debug_panel = DebugPanel::default();
     let path_arg = std::env::args().nth(1);
     let mut debug_enabled = false;
@@ -96,6 +99,7 @@ fn main() -> std::io::Result<()> {
             }
         })?;
         renderer.start_frame();
+        renderer.render(&grid_background)?;
         renderer.render_sticky(&status_bar)?;
         if debug_enabled {
             renderer.render_sticky(&debug_panel)?;

@@ -53,3 +53,4 @@ Things that are useful and should be added:
 - Build/distribution
 - Hover effects: e.g. change char under cursor if action is available
 - Animations: e.g. hover background transition instead of instant change
+- Color theme
