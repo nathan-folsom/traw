@@ -98,9 +98,7 @@ impl State {
                 // Only start editing text if this is a new rectangle
                 if rect.text.is_empty() {
                     self.enter_text_mode(rect)?;
-                } else if let Mode::DrawRectangle(rect, _) =
-                    std::mem::replace(&mut self.mode, Mode::Normal)
-                {
+                } else {
                     self.shapes.push(Shape::Box(rect));
                     self.enter_mode(Mode::Normal);
                 }
