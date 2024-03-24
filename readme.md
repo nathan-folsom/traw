@@ -31,9 +31,6 @@ traw [options]
   - (draw mode) End draw mode
 - 'd' (normal mode) - Toggle debug panel
 
-
-## File 
-
 ## Feature To-do
 
 Things that are useful and should be added:
