@@ -7,6 +7,7 @@ use crossterm::{
 };
 
 use crate::{
+    characters::{INTERSECTION_DOWN, INTERSECTION_LEFT, INTERSECTION_RIGHT, INTERSECTION_UP},
     debug_panel::DebugPanel,
     grid_background::GridBackground,
     mode::{Anchor, Mode, Selection},
@@ -304,25 +305,43 @@ impl Renderer {
             _ => {}
         }
         let mut intersection_points = vec![];
-        let mut add_intersection_point = |point: Option<&(i32, i32)>| {
-            if let Some((x, y)) = point {
-                all_rectangles.iter().for_each(|r| {
-                    let intersection = r.get_intersection(x, y);
-                    if let Intersection::Edge(_) = intersection {
-                        intersection_points.push(Point {
-                            x: *x,
-                            y: *y,
-                            character: 'x',
-                            foreground: Color::Border,
-                            background: Color::BorderBackground,
-                        });
-                    }
-                })
-            }
-        };
+        let mut add_intersection_point =
+            |point: Option<&(i32, i32)>, reference: Option<&(i32, i32)>| {
+                if let Some((x, y)) = point {
+                    all_rectangles.iter().for_each(|r| {
+                        let intersection = r.get_intersection(x, y);
+                        if let Intersection::Edge(_) = intersection {
+                            if let Some((x_1, y_1)) = reference {
+                                let character = {
+                                    if x_1 > x {
+                                        INTERSECTION_RIGHT
+                                    } else if x_1 < x {
+                                        INTERSECTION_LEFT
+                                    } else if y_1 < y {
+                                        INTERSECTION_UP
+                                    } else if y_1 > y {
+                                        INTERSECTION_DOWN
+                                    } else {
+                                        unreachable!("Reference point should always be different than endpoint")
+                                    }
+                                };
+                                intersection_points.push(Point {
+                                    x: *x,
+                                    y: *y,
+                                    character,
+                                    foreground: Color::Border,
+                                    background: Color::BorderBackground,
+                                });
+                            }
+                        }
+                    })
+                }
+            };
         all_arrows.iter().for_each(|a| {
-            add_intersection_point(a.points.first());
-            add_intersection_point(a.points.last());
+            add_intersection_point(a.points.first(), a.points.get(1));
+            if a.points.len() > 1 {
+                add_intersection_point(a.points.last(), a.points.get(a.points.len() - 2));
+            }
         });
         self.render(intersection_points)
     }
