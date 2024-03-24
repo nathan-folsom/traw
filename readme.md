@@ -43,7 +43,6 @@ Things that are useful and should be added:
 - Toggle debug pane
 - Move boxes
 - Configurable keybindings
-- Background grid: i.e. show some sort of guidelines
 - Use junction characters where arrows intersect boxes
 - Box text justification and alignment
 - Flexboxy layout
