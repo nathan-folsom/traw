@@ -1,4 +1,3 @@
-use crossterm::cursor;
 use serde::{Deserialize, Serialize};
 
 use crate::{

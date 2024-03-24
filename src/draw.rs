@@ -276,7 +276,7 @@ impl Renderer {
                 self.render_overlay(selection)?;
             }
         }
-        self.render_intersections(state);
+        self.render_intersections(state)?;
 
         self.finish_frame()?;
 
@@ -284,7 +284,7 @@ impl Renderer {
         Ok(())
     }
 
-    fn render_intersections(&mut self, state: &State) {
+    fn render_intersections(&mut self, state: &State) -> std::io::Result<()> {
         let mut all_arrows = vec![];
         let mut all_rectangles = vec![];
         state.shapes.iter().for_each(|s| match s {
@@ -303,16 +303,27 @@ impl Renderer {
             }
             _ => {}
         }
-
-        all_arrows.iter().for_each(|a| {
-            let start = a.points.first();
-            let end = a.points.last();
-
-            if let Some((x, y)) = start {
+        let mut intersection_points = vec![];
+        let mut add_intersection_point = |point: Option<&(i32, i32)>| {
+            if let Some((x, y)) = point {
                 all_rectangles.iter().for_each(|r| {
                     let intersection = r.get_intersection(x, y);
+                    if let Intersection::Edge(_) = intersection {
+                        intersection_points.push(Point {
+                            x: *x,
+                            y: *y,
+                            character: 'x',
+                            foreground: Color::Border,
+                            background: Color::BorderBackground,
+                        });
+                    }
                 })
             }
-        })
+        };
+        all_arrows.iter().for_each(|a| {
+            add_intersection_point(a.points.first());
+            add_intersection_point(a.points.last());
+        });
+        self.render(intersection_points)
     }
 }
