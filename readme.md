@@ -21,7 +21,7 @@ traw [options]
   - Start drawing an arrow when cursor is on a box boundary
   - Edit box text content when cursor is inside a box
 - 'r' (normal mode) - Edit an existing box by dragging from a corner
-- 'hjkl' (normal mode, draw mode) - Move around
+- 'hjkl' (normal mode, draw mode) - Move around (can be prefixed with number to move that many characters, e.g. '10j')
 - 'x' (normal mode) - Delete shape under cursor
 - 's' (normal mode) - Save current file
 - 'v' (normal mode) - Enter select mode
@@ -38,7 +38,6 @@ traw [options]
 
 Things that are useful and should be added:
 
-- Count modifiers: e.g. '10l' to go 10 cols to the right
 - Word motions: e.g. 'w' to go to start of next object
 - Infinite canvas: i.e. terminal is a window onto a larger space, instead of representing the whole space.
 - Toggle debug pane
