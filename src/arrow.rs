@@ -95,15 +95,14 @@ impl Draw for Arrow {
 }
 
 impl CursorIntersect for Arrow {
-    fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
-        let (c_x, c_y) = cursor::position()?;
-        for (x, y) in &self.points {
-            if *x as u16 != c_x || *y as u16 != c_y {
+    fn get_intersection(&self, x: &i32, y: &i32) -> crate::draw::Intersection {
+        for (x_1, y_1) in &self.points {
+            if x != x_1 || y != y_1 {
                 continue;
             }
-            return Ok(Intersection::Edge(EdgeIntersection::Side));
+            return Intersection::Edge(EdgeIntersection::Side);
         }
-        Ok(Intersection::None)
+        Intersection::None
     }
 }
 

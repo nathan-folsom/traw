@@ -150,7 +150,7 @@ impl State {
     pub fn get_cursor_intersection(&self) -> std::io::Result<(Intersection, usize)> {
         for i in 0..self.shapes.len() {
             let shape = &self.shapes[i];
-            match shape.get_intersection() {
+            match shape.get_cursor_intersection() {
                 Ok(Intersection::None) => {}
                 Ok(intersection_type) => {
                     return Ok((intersection_type, i));

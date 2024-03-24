@@ -11,6 +11,7 @@ use crate::{
     grid_background::GridBackground,
     mode::{Anchor, Mode, Selection},
     rectangle::Drag,
+    shape::Shape,
     state::State,
     status_bar::StatusBar,
 };
@@ -69,9 +70,16 @@ pub trait Draw {
 }
 
 pub trait CursorIntersect {
-    fn get_intersection(&self) -> std::io::Result<Intersection>;
+    fn get_intersection(&self, x: &i32, y: &i32) -> Intersection;
+    fn get_cursor_intersection(&self) -> std::io::Result<Intersection> {
+        let (cursor_x, cursor_y) = cursor::position()?;
+        Ok(self.get_intersection(&(cursor_x as i32), &(cursor_y as i32)))
+    }
     fn hovered(&self) -> std::io::Result<bool> {
-        Ok(!matches!(self.get_intersection()?, Intersection::None))
+        Ok(!matches!(
+            self.get_cursor_intersection()?,
+            Intersection::None
+        ))
     }
 }
 
@@ -268,10 +276,43 @@ impl Renderer {
                 self.render_overlay(selection)?;
             }
         }
+        self.render_intersections(state);
 
         self.finish_frame()?;
 
         stdout().flush()?;
         Ok(())
+    }
+
+    fn render_intersections(&mut self, state: &State) {
+        let mut all_arrows = vec![];
+        let mut all_rectangles = vec![];
+        state.shapes.iter().for_each(|s| match s {
+            Shape::Rectangle(r) => all_rectangles.push(r),
+            Shape::Arrow(a) => all_arrows.push(a),
+        });
+        match &state.mode {
+            Mode::DrawRectangle(rect, _) => {
+                all_rectangles.push(rect);
+            }
+            Mode::Text(rect) => {
+                all_rectangles.push(rect);
+            }
+            Mode::DrawArrow(arrow) => {
+                all_arrows.push(arrow);
+            }
+            _ => {}
+        }
+
+        all_arrows.iter().for_each(|a| {
+            let start = a.points.first();
+            let end = a.points.last();
+
+            if let Some((x, y)) = start {
+                all_rectangles.iter().for_each(|r| {
+                    let intersection = r.get_intersection(x, y);
+                })
+            }
+        })
     }
 }

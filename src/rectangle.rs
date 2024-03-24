@@ -172,11 +172,9 @@ impl Draw for Rectangle {
 }
 
 impl CursorIntersect for Rectangle {
-    fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
-        let (cursor_x, cursor_y) = cursor::position()?;
-
-        let c_x = cursor_x as i32;
-        let c_y = cursor_y as i32;
+    fn get_intersection(&self, x: &i32, y: &i32) -> Intersection {
+        let c_x = *x;
+        let c_y = *y;
         let y_0 = self.y;
         let x_0 = self.x;
         let y_1 = self.y + self.height - 1;
@@ -186,7 +184,7 @@ impl CursorIntersect for Rectangle {
         let cursor_y_in_rectangle = c_y >= y_0 && c_y <= y_1;
 
         if !cursor_x_in_rectangle || !cursor_y_in_rectangle {
-            return Ok(Intersection::None);
+            return Intersection::None;
         }
 
         let cursor_on_top_border = c_y == y_0;
@@ -195,13 +193,13 @@ impl CursorIntersect for Rectangle {
         let cursor_on_right_border = c_x == x_1;
 
         if cursor_on_right_border && cursor_on_top_border {
-            return Ok(Intersection::Edge(Corner(Some(Anchor::TopRight))));
+            return Intersection::Edge(Corner(Some(Anchor::TopRight)));
         } else if cursor_on_right_border && cursor_on_bottom_border {
-            return Ok(Intersection::Edge(Corner(Some(Anchor::BottomRight))));
+            return Intersection::Edge(Corner(Some(Anchor::BottomRight)));
         } else if cursor_on_left_border && cursor_on_top_border {
-            return Ok(Intersection::Edge(Corner(Some(Anchor::TopLeft))));
+            return Intersection::Edge(Corner(Some(Anchor::TopLeft)));
         } else if cursor_on_left_border && cursor_on_bottom_border {
-            return Ok(Intersection::Edge(Corner(Some(Anchor::BottomLeft))));
+            return Intersection::Edge(Corner(Some(Anchor::BottomLeft)));
         }
 
         if cursor_on_top_border
@@ -209,10 +207,10 @@ impl CursorIntersect for Rectangle {
             || cursor_on_bottom_border
             || cursor_on_left_border
         {
-            return Ok(Intersection::Edge(crate::draw::EdgeIntersection::Side));
+            return Intersection::Edge(crate::draw::EdgeIntersection::Side);
         }
 
-        Ok(Intersection::Inner)
+        Intersection::Inner
     }
 }
 

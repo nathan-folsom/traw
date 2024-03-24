@@ -22,10 +22,10 @@ impl Draw for Shape {
 }
 
 impl CursorIntersect for Shape {
-    fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
+    fn get_intersection(&self, x: &i32, y: &i32) -> crate::draw::Intersection {
         match self {
-            Shape::Arrow(shape) => shape.get_intersection(),
-            Shape::Rectangle(shape) => shape.get_intersection(),
+            Shape::Arrow(shape) => shape.get_intersection(x, y),
+            Shape::Rectangle(shape) => shape.get_intersection(x, y),
         }
     }
 }
