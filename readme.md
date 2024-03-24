@@ -40,7 +40,6 @@ Things that are useful and should be added:
 
 - Word motions: e.g. 'w' to go to start of next object
 - Infinite canvas: i.e. terminal is a window onto a larger space, instead of representing the whole space.
-- Toggle debug pane
 - Move boxes
 - Configurable keybindings
 - Use junction characters where arrows intersect boxes
