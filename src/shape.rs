@@ -8,15 +8,15 @@ use crate::{
 
 #[derive(Serialize, Deserialize)]
 pub enum Shape {
-    Box(Rectangle),
-    Line(Arrow),
+    Rectangle(Rectangle),
+    Arrow(Arrow),
 }
 
 impl Draw for Shape {
     fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
         match self {
-            Shape::Line(shape) => shape.draw(),
-            Shape::Box(shape) => shape.draw(),
+            Shape::Arrow(shape) => shape.draw(),
+            Shape::Rectangle(shape) => shape.draw(),
         }
     }
 }
@@ -24,8 +24,8 @@ impl Draw for Shape {
 impl CursorIntersect for Shape {
     fn get_intersection(&self) -> std::io::Result<crate::draw::Intersection> {
         match self {
-            Shape::Line(shape) => shape.get_intersection(),
-            Shape::Box(shape) => shape.get_intersection(),
+            Shape::Arrow(shape) => shape.get_intersection(),
+            Shape::Rectangle(shape) => shape.get_intersection(),
         }
     }
 }

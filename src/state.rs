@@ -53,10 +53,10 @@ impl State {
                 Intersection::Inner => {
                     let edited = self.shapes.remove(i);
                     match edited {
-                        Shape::Box(rectangle) => {
+                        Shape::Rectangle(rectangle) => {
                             self.enter_text_mode(rectangle)?;
                         }
-                        Shape::Line(arrow) => {
+                        Shape::Arrow(arrow) => {
                             self.enter_mode(Mode::DrawArrow(arrow));
                         }
                     }
@@ -72,7 +72,7 @@ impl State {
         if let Mode::Normal = self.mode {
             let (intersection, i) = self.get_cursor_intersection()?;
             if let Intersection::Edge(Corner(Some(anchor))) = intersection {
-                if let Shape::Box(rectangle) = self.shapes.remove(i) {
+                if let Shape::Rectangle(rectangle) = self.shapes.remove(i) {
                     self.enter_mode(Mode::DrawRectangle(rectangle, anchor))
                 }
             }
@@ -99,16 +99,16 @@ impl State {
                 if rect.text.is_empty() {
                     self.enter_text_mode(rect)?;
                 } else {
-                    self.shapes.push(Shape::Box(rect));
+                    self.shapes.push(Shape::Rectangle(rect));
                     self.enter_mode(Mode::Normal);
                 }
             }
             Mode::Text(rect) => {
-                self.shapes.push(Shape::Box(rect));
+                self.shapes.push(Shape::Rectangle(rect));
                 queue!(stdout(), cursor::SetCursorStyle::SteadyBlock)?;
             }
             Mode::DrawArrow(arrow) => {
-                self.shapes.push(Shape::Line(arrow));
+                self.shapes.push(Shape::Arrow(arrow));
             }
             Mode::Select(_) => {
                 self.enter_mode(Mode::Normal);
