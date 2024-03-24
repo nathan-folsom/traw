@@ -42,7 +42,6 @@ Things that are useful and should be added:
 - Infinite canvas: i.e. terminal is a window onto a larger space, instead of representing the whole space.
 - Move boxes
 - Configurable keybindings
-- Use junction characters where arrows intersect boxes
 - Box text justification and alignment
 - Flexboxy layout
 - Undo/redo
