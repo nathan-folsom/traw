@@ -1,14 +1,14 @@
 use std::io::stdout;
 
 use crossterm::{
-    cursor,
     event::{self, KeyCode},
-    execute, queue,
+    execute,
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
 use draw::Renderer;
 use mode::Mode;
+use motion_state::MotionState;
 use persistence::{load, save};
 use state::State;
 
@@ -18,6 +18,7 @@ mod debug_panel;
 mod draw;
 mod grid_background;
 mod mode;
+mod motion_state;
 mod persistence;
 mod rectangle;
 mod shape;
@@ -27,6 +28,7 @@ mod status_bar;
 fn main() -> std::io::Result<()> {
     init()?;
     let mut state = State::init();
+    let mut motion_state = MotionState::new();
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
     let path_arg = std::env::args().nth(1);
@@ -56,16 +58,16 @@ fn main() -> std::io::Result<()> {
                         'x' => state.handle_delete()?,
                         'v' => state.handle_select()?,
                         'd' => debug_enabled = !debug_enabled,
-                        _ => handle_motions(key)?,
+                        _ => motion_state.handle_motions(key)?,
                     },
                     Mode::Select(selection) => {
                         if key == 'y' {
                             renderer.handle_yank(selection);
                         }
-                        handle_motions(key)?;
+                        motion_state.handle_motions(key)?;
                     }
                     _ => {
-                        handle_motions(key)?;
+                        motion_state.handle_motions(key)?;
                     }
                 },
 
@@ -105,26 +107,6 @@ fn init() -> std::io::Result<()> {
 fn end() -> std::io::Result<()> {
     execute!(stdout(), terminal::LeaveAlternateScreen)?;
     disable_raw_mode()?;
-
-    Ok(())
-}
-
-fn handle_motions(key: char) -> std::io::Result<()> {
-    match key {
-        'h' => {
-            queue!(stdout(), cursor::MoveLeft(1))?;
-        }
-        'j' => {
-            queue!(stdout(), cursor::MoveDown(1))?;
-        }
-        'k' => {
-            queue!(stdout(), cursor::MoveUp(1))?;
-        }
-        'l' => {
-            queue!(stdout(), cursor::MoveRight(1))?;
-        }
-        _ => {}
-    }
 
     Ok(())
 }
