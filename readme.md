@@ -35,6 +35,7 @@ traw [options]
 
 Things that are useful and should be added:
 
+- License
 - Word motions: e.g. 'w' to go to start of next object
 - Infinite canvas: i.e. terminal is a window onto a larger space, instead of representing the whole space.
 - Move boxes
