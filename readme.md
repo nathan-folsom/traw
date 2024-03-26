@@ -55,7 +55,6 @@ Things that are useful and should be added:
 
 Things that are good for the health of the project:
 
-- License
 - Increased unit test coverage
 - Integration test setup
 - Build/distribution
