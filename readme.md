@@ -31,11 +31,12 @@ traw [options]
   - (draw mode) End draw mode
 - 'd' (normal mode) - Toggle debug panel
 
-## Feature To-do
+## To-do
+
+### Features
 
 Things that are useful and should be added:
 
-- License
 - Word motions: e.g. 'w' to go to start of next object
 - Infinite canvas: i.e. terminal is a window onto a larger space, instead of representing the whole space.
 - Move boxes
@@ -43,11 +44,19 @@ Things that are useful and should be added:
 - Box text justification and alignment
 - Flexboxy layout
 - Undo/redo
-- Command line docs
-- Build/distribution
 - Hover effects: e.g. change char under cursor if action is available
 - Animations: e.g. hover background transition instead of instant change
 - Color theme
 - Rerender when terminal resized
 - Arrow characters to show direction
 - Escape key to exit modes, as well as enter
+
+### General
+
+Things that are good for the health of the project:
+
+- License
+- Increased unit test coverage
+- Integration test setup
+- Build/distribution
+- Command line docs
