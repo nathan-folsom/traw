@@ -50,6 +50,7 @@ Things that are useful and should be added:
 - Rerender when terminal resized
 - Arrow characters to show direction
 - Escape key to exit modes, as well as enter
+- Zoom levels
 
 ### General
 
