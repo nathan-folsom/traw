@@ -10,6 +10,7 @@ use crate::{
         ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT, ARROW_UP, CORNER_1, CORNER_2, CORNER_3, CORNER_4,
         HORIZONTAL_BAR, VERTICAL_BAR,
     },
+    cursor_guide::GuidePoint,
     draw::{Color, CursorIntersect, Draw, EdgeIntersection, Intersection, Point},
 };
 
@@ -138,6 +139,16 @@ impl CursorIntersect for Arrow {
             return Intersection::Edge(EdgeIntersection::Side);
         }
         Intersection::None
+    }
+}
+
+impl GuidePoint for Arrow {
+    fn get_intersection_points(&self) -> Vec<(i32, i32)> {
+        vec![self.points.first(), self.points.last()]
+            .into_iter()
+            .flatten()
+            .cloned()
+            .collect()
     }
 }
 

@@ -35,7 +35,7 @@ impl GuidePoint for Shape {
     fn get_intersection_points(&self) -> Vec<(i32, i32)> {
         match self {
             Shape::Rectangle(shape) => shape.get_intersection_points(),
-            _ => vec![],
+            Shape::Arrow(shape) => shape.get_intersection_points(),
         }
     }
 }
