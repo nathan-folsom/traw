@@ -51,6 +51,7 @@ Things that are useful and should be added:
 - Escape key to exit modes, as well as enter
 - Zoom levels
 - Extend/shrink arrows when resizing boxes
+- Draw boxes in all directions, not just down and right
 
 ### General
 
