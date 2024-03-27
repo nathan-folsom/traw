@@ -15,3 +15,8 @@ pub const INTERSECTION_UP: char = '┴';
 pub const INTERSECTION_DOWN: char = '┬';
 pub const INTERSECTION_LEFT: char = '┤';
 pub const INTERSECTION_RIGHT: char = '├';
+
+pub const ARROW_UP: char = '↑';
+pub const ARROW_DOWN: char = '↓';
+pub const ARROW_LEFT: char = '←';
+pub const ARROW_RIGHT: char = '→';
