@@ -1,6 +1,11 @@
+use std::io::Result;
+
 use crossterm::cursor;
 
-use crate::mode::Anchor;
+use crate::{
+    characters::{HORIZONTAL_BAR, VERTICAL_BAR},
+    mode::Anchor,
+};
 
 /// Used for rendering an object at a specific location on the canvas
 pub trait Draw {
@@ -29,6 +34,43 @@ pub trait CursorIntersect {
             self.get_cursor_intersection()?,
             Intersection::None
         ))
+    }
+}
+
+/// Used for showing guides when the cursor lines up with an object in one dimension
+pub trait CursorGuide {
+    fn get_intersection_point(&self, x: &i32, y: &i32) -> Option<(i32, i32)>;
+    fn draw_guide(&self) -> Result<Vec<Point<i32>>> {
+        let (cursor_x, cursor_y) = cursor::position()?;
+        let c_x = cursor_x as i32;
+        let c_y = cursor_y as i32;
+        let mut points = vec![];
+        if let Some((x, y)) = self.get_intersection_point(&c_x, &c_y) {
+            match (c_x == x, c_y == y) {
+                (true, false) => {
+                    for i in y..c_y {
+                        points.push(Self::get_point(x, i, VERTICAL_BAR));
+                    }
+                }
+                (false, true) => {
+                    for i in x..c_x {
+                        points.push(Self::get_point(i, y, HORIZONTAL_BAR));
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        Ok(points)
+    }
+    fn get_point(x: i32, y: i32, character: char) -> Point<i32> {
+        Point {
+            x,
+            y,
+            character,
+            foreground: Color::Guide,
+            background: Color::EmptyBackground,
+        }
     }
 }
 
@@ -80,6 +122,7 @@ pub enum Color {
     Debug,
     DebugBackground,
     Grid,
+    Guide,
 }
 
 impl From<&Color> for crossterm::style::Color {
@@ -93,6 +136,7 @@ impl From<&Color> for crossterm::style::Color {
             Color::Empty => (255, 255, 255),
             Color::EmptyBackground => (0, 0, 0),
             Color::Grid => (100, 100, 40),
+            Color::Guide => (60, 10, 10),
         };
         Self::Rgb { r, g, b }
     }
