@@ -136,7 +136,7 @@ impl From<&Color> for crossterm::style::Color {
             Color::Empty => (255, 255, 255),
             Color::EmptyBackground => (0, 0, 0),
             Color::Grid => (100, 100, 40),
-            Color::Guide => (60, 10, 10),
+            Color::Guide => (120, 20, 20),
         };
         Self::Rgb { r, g, b }
     }

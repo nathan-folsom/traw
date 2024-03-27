@@ -10,7 +10,7 @@ use crate::{
     arrow::Arrow,
     debug_panel::debug,
     draw::{
-        CursorIntersect, Draw,
+        CursorGuide, CursorIntersect, Draw,
         EdgeIntersection::{Corner, Side},
         Intersection, Point,
     },
@@ -177,6 +177,9 @@ impl Draw for State {
             .iter()
             .map(|shape| {
                 for point in shape.draw()? {
+                    points.push(point);
+                }
+                for point in shape.draw_guide()? {
                     points.push(point);
                 }
                 Ok(())

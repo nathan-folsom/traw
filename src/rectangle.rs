@@ -14,7 +14,9 @@ use crate::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
-    draw::{Color, CursorIntersect, Draw, EdgeIntersection::Corner, Intersection, Point},
+    draw::{
+        Color, CursorGuide, CursorIntersect, Draw, EdgeIntersection::Corner, Intersection, Point,
+    },
     mode::Anchor,
 };
 
@@ -119,6 +121,7 @@ impl Draw for Rectangle {
             }
         }
 
+        // TODO: Remove shrink, no longer needed with new renderer
         match self.shrink {
             Shrink::Right => {
                 for y in 0..self.height {
@@ -278,6 +281,38 @@ pub trait Drag {
             _ => {}
         }
         *x = cursor_x;
+    }
+}
+
+impl CursorGuide for Rectangle {
+    fn get_intersection_point(&self, x: &i32, y: &i32) -> Option<(i32, i32)> {
+        let top_left = (self.x, self.y);
+        let top_right = (self.x + self.width - 1, self.y);
+        let bottom_right = (self.x + self.width - 1, self.y + self.height - 1);
+        let bottom_left = (self.x, self.y + self.height - 1);
+
+        let mut closest = None;
+        [top_left, top_right, bottom_right, bottom_left]
+            .iter()
+            .filter(|(c_x, c_y)| matches!((c_x == x, c_y == y), (true, false) | (false, true)))
+            .for_each(|(c_x, c_y)| {
+                let diff = c_x.abs_diff(*x).max(c_y.abs_diff(*y));
+                match closest {
+                    None => {
+                        closest = Some(((*c_x, *c_y), diff));
+                    }
+                    Some((_, prev_diff)) => {
+                        if prev_diff > diff {
+                            closest = Some(((*c_x, *c_y), diff));
+                        }
+                    }
+                }
+            });
+
+        match closest {
+            Some((point, _)) => Some(point),
+            _ => None,
+        }
     }
 }
 
