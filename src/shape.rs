@@ -2,7 +2,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     arrow::Arrow,
-    draw::{CursorGuide, CursorIntersect, Draw, Point},
+    cursor_guide::GuidePoint,
+    draw::{CursorIntersect, Draw, Point},
     rectangle::Rectangle,
 };
 
@@ -30,11 +31,11 @@ impl CursorIntersect for Shape {
     }
 }
 
-impl CursorGuide for Shape {
-    fn get_intersection_point(&self, x: &i32, y: &i32) -> Option<(i32, i32)> {
+impl GuidePoint for Shape {
+    fn get_intersection_points(&self) -> Vec<(i32, i32)> {
         match self {
-            Shape::Rectangle(shape) => shape.get_intersection_point(x, y),
-            _ => None,
+            Shape::Rectangle(shape) => shape.get_intersection_points(),
+            _ => vec![],
         }
     }
 }

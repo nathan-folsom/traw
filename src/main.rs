@@ -14,6 +14,7 @@ use state::State;
 
 mod arrow;
 mod characters;
+mod cursor_guide;
 mod debug_panel;
 mod draw;
 mod grid_background;

@@ -8,9 +8,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     arrow::Arrow,
+    cursor_guide::CursorGuide,
     debug_panel::debug,
     draw::{
-        CursorGuide, CursorIntersect, Draw,
+        CursorIntersect, Draw,
         EdgeIntersection::{Corner, Side},
         Intersection, Point,
     },
@@ -179,12 +180,13 @@ impl Draw for State {
                 for point in shape.draw()? {
                     points.push(point);
                 }
-                for point in shape.draw_guide()? {
-                    points.push(point);
-                }
                 Ok(())
             })
             .collect::<std::io::Result<Vec<_>>>()?;
+        for p in CursorGuide::new(&self.shapes).draw()? {
+            points.push(p)
+        }
+
         Ok(points)
     }
 }
