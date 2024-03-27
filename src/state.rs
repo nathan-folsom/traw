@@ -173,20 +173,10 @@ impl State {
 
 impl Draw for State {
     fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
-        let mut points = vec![];
-        self.shapes
-            .iter()
-            .map(|shape| {
-                for point in shape.draw()? {
-                    points.push(point);
-                }
-                Ok(())
-            })
-            .collect::<std::io::Result<Vec<_>>>()?;
-        for p in CursorGuide::new(&self.shapes).draw()? {
-            points.push(p)
+        let mut points = vec![CursorGuide::new(&self.shapes).draw()?];
+        for shape in &self.shapes {
+            points.push(shape.draw()?);
         }
-
-        Ok(points)
+        Ok(points.into_iter().flatten().collect())
     }
 }

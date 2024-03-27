@@ -34,39 +34,22 @@ impl Draw for CursorGuide {
         let (cursor_x, cursor_y) = cursor::position()?;
         let c_x = cursor_x as i32;
         let c_y = cursor_y as i32;
-        let mut closest = None;
+        let mut points = vec![];
         self.points
             .iter()
-            .filter(|(x, y)| matches!((&c_x == x, &c_y == y), (true, false) | (false, true)))
-            .for_each(|(x, y)| {
-                let diff = c_x.abs_diff(*x).max(c_y.abs_diff(*y));
-                match closest {
-                    None => {
-                        closest = Some(((*x, *y), diff));
-                    }
-                    Some((_, prev_diff)) => {
-                        if prev_diff > diff {
-                            closest = Some(((*x, *y), diff));
-                        }
-                    }
-                }
-            });
-        let mut points = vec![];
-        if let Some(((x, y), _)) = closest {
-            match (c_x == x, c_y == y) {
+            .for_each(|(x, y)| match (&c_x == x, &c_y == y) {
                 (true, false) => {
                     for i in (y + 1)..c_y {
-                        points.push(Self::get_point(x, i, VERTICAL_BAR));
+                        points.push(Self::get_point(*x, i, VERTICAL_BAR));
                     }
                 }
                 (false, true) => {
                     for i in (x + 1)..c_x {
-                        points.push(Self::get_point(i, y, HORIZONTAL_BAR));
+                        points.push(Self::get_point(i, *y, HORIZONTAL_BAR));
                     }
                 }
                 _ => {}
-            }
-        }
+            });
         Ok(points)
     }
 }
