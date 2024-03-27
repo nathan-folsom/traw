@@ -1,4 +1,7 @@
-use std::cmp::Ordering::{self, Equal, Greater, Less};
+use std::{
+    cmp::Ordering::{self, Equal, Greater, Less},
+    io::Result,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -29,62 +32,102 @@ impl Arrow {
             self.points.push((cursor_x as i32, cursor_y as i32));
         }
     }
+
+    const FG: Color = Color::Border;
+    const BG: Color = Color::BorderBackground;
+    const BG_HOVER: Color = Color::BorderBackgroundHover;
+
+    fn get_endpoint(&self, point: &(i32, i32), neighbor: &(i32, i32)) -> Result<Point<i32>> {
+        self.get_point(
+            point,
+            match point.1 != neighbor.1 && point.0 == neighbor.0 {
+                true => VERTICAL_BAR,
+                false => HORIZONTAL_BAR,
+            },
+        )
+    }
+
+    fn get_point(&self, (x, y): &(i32, i32), c: char) -> Result<Point<i32>> {
+        let (foreground, background) = self.get_color()?;
+        Ok(Point {
+            x: *x,
+            y: *y,
+            character: c,
+            foreground,
+            background,
+        })
+    }
+
+    fn get_color(&self) -> Result<(Color, Color)> {
+        if self.hovered()? {
+            Ok((Self::FG, Self::BG_HOVER))
+        } else {
+            Ok((Self::FG, Self::BG))
+        }
+    }
+
+    fn get_char(
+        prev: &(i32, i32),
+        current: &(i32, i32),
+        next: &(i32, i32),
+        try_arrow: &mut bool,
+    ) -> char {
+        let mut get_arrow = |normal: char, arrow: char| match try_arrow {
+            false => normal,
+            true => {
+                *try_arrow = false;
+                arrow
+            }
+        };
+        match (
+            Self::get_direction(prev, current),
+            Self::get_direction(current, next),
+        ) {
+            ((Equal, Greater), (Equal, Greater)) => get_arrow(VERTICAL_BAR, ARROW_UP),
+            ((Equal, Less), (Equal, Less)) => get_arrow(VERTICAL_BAR, ARROW_DOWN),
+            ((Greater, Equal), (Greater, Equal)) => get_arrow(HORIZONTAL_BAR, ARROW_LEFT),
+            ((Less, Equal), (Less, Equal)) => get_arrow(HORIZONTAL_BAR, ARROW_RIGHT),
+            ((Greater, Equal), (Equal, Less)) | ((Equal, Greater), (Less, Equal)) => CORNER_3,
+            ((Less, Equal), (Equal, Greater)) | ((Equal, Less), (Greater, Equal)) => CORNER_1,
+            ((Less, Equal), (Equal, Less)) | ((Equal, Greater), (Greater, Equal)) => CORNER_4,
+            ((Equal, Less), (Less, Equal)) | ((Greater, Equal), (Equal, Greater)) => CORNER_2,
+            _ => ' ',
+        }
+    }
+
+    fn get_direction(a: &(i32, i32), b: &(i32, i32)) -> (Ordering, Ordering) {
+        (a.0.cmp(&b.0), a.1.cmp(&b.1))
+    }
 }
 
 impl Draw for Arrow {
     fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
-        let hover = self.hovered()?;
         let mut points = vec![];
-
-        let foreground = Color::Border;
-        let background = {
-            if hover {
-                Color::BorderBackgroundHover
-            } else {
-                Color::BorderBackground
-            }
-        };
-
         let mut add_arrow = false;
-        self.points.iter().enumerate().for_each(|(i, point)| {
-            if i == 0 {
-                return;
-            }
-            let prev = self.points[i - 1];
-            if i == self.points.len() - 1 {
-                let is_vertical = point.1 != prev.1 && point.0 == prev.0;
-                points.push(Point {
-                    x: point.0,
-                    y: point.1,
-                    character: match is_vertical {
-                        true => VERTICAL_BAR,
-                        false => HORIZONTAL_BAR,
-                    },
-                    foreground,
-                    background,
-                });
-                return;
-            }
-
-            if i == self.points.len() / 2 {
-                add_arrow = true;
-            }
-            let character = get_char(&prev, point, &self.points[i + 1], add_arrow);
-            if [ARROW_UP, ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT]
-                .iter()
-                .any(|c| c == &character)
-            {
-                add_arrow = false;
-            }
-
-            points.push(Point {
-                x: point.0,
-                y: point.1,
-                character,
-                foreground,
-                background,
-            });
-        });
+        self.points
+            .iter()
+            .enumerate()
+            .map(|(i, point)| {
+                let prev = match i {
+                    0 => None,
+                    n => self.points.get(n - 1),
+                };
+                let next = self.points.get(i + 1);
+                if i == self.points.len() / 2 {
+                    add_arrow = true;
+                }
+                match (prev, next) {
+                    (None, Some(p)) | (Some(p), None) => points.push(self.get_endpoint(point, p)?),
+                    (Some(p), Some(n)) => {
+                        points.push(
+                            self.get_point(point, Self::get_char(p, point, n, &mut add_arrow))?,
+                        );
+                    }
+                    _ => {}
+                };
+                Result::Ok(())
+            })
+            .collect::<Result<Vec<_>>>()?;
 
         Ok(points)
     }
@@ -102,96 +145,106 @@ impl CursorIntersect for Arrow {
     }
 }
 
-fn get_char(prev: &(i32, i32), current: &(i32, i32), next: &(i32, i32), try_arrow: bool) -> char {
-    let get_arrow = |normal: char, arrow: char| match try_arrow {
-        false => normal,
-        true => arrow,
-    };
-    match (get_direction(prev, current), get_direction(current, next)) {
-        ((Equal, Greater), (Equal, Greater)) => get_arrow(VERTICAL_BAR, ARROW_UP),
-        ((Equal, Less), (Equal, Less)) => get_arrow(VERTICAL_BAR, ARROW_DOWN),
-        ((Greater, Equal), (Greater, Equal)) => get_arrow(HORIZONTAL_BAR, ARROW_LEFT),
-        ((Less, Equal), (Less, Equal)) => get_arrow(HORIZONTAL_BAR, ARROW_RIGHT),
-        ((Greater, Equal), (Equal, Less)) | ((Equal, Greater), (Less, Equal)) => CORNER_3,
-        ((Less, Equal), (Equal, Greater)) | ((Equal, Less), (Greater, Equal)) => CORNER_1,
-        ((Less, Equal), (Equal, Less)) | ((Equal, Greater), (Greater, Equal)) => CORNER_4,
-        ((Equal, Less), (Less, Equal)) | ((Greater, Equal), (Equal, Greater)) => CORNER_2,
-        _ => ' ',
-    }
-}
-
-fn get_direction(a: &(i32, i32), b: &(i32, i32)) -> (Ordering, Ordering) {
-    (a.0.cmp(&b.0), a.1.cmp(&b.1))
-}
-
 #[cfg(test)]
 mod test {
     use crate::characters::*;
-    use crate::draw::Draw;
 
-    use super::{get_char, Arrow};
+    use super::Arrow;
 
     #[test]
     fn should_get_horizontal_bar() {
-        assert_eq!(HORIZONTAL_BAR, get_char(&(0, 0), &(1, 0), &(2, 0), false));
+        assert_eq!(
+            HORIZONTAL_BAR,
+            Arrow::get_char(&(0, 0), &(1, 0), &(2, 0), &mut false)
+        );
     }
 
     #[test]
     fn should_get_vertical_bar() {
-        assert_eq!(VERTICAL_BAR, get_char(&(0, 0), &(0, 1), &(0, 2), false));
+        assert_eq!(
+            VERTICAL_BAR,
+            Arrow::get_char(&(0, 0), &(0, 1), &(0, 2), &mut false)
+        );
     }
 
     #[test]
     fn should_get_corner_1() {
-        assert_eq!(CORNER_1, get_char(&(0, 1), &(1, 1), &(1, 0), false));
-        assert_eq!(CORNER_1, get_char(&(1, 0), &(1, 1), &(0, 1), false));
+        assert_eq!(
+            CORNER_1,
+            Arrow::get_char(&(0, 1), &(1, 1), &(1, 0), &mut false)
+        );
+        assert_eq!(
+            CORNER_1,
+            Arrow::get_char(&(1, 0), &(1, 1), &(0, 1), &mut false)
+        );
     }
 
     #[test]
     fn should_get_corner_2() {
-        assert_eq!(CORNER_2, get_char(&(0, 0), &(0, 1), &(1, 1), false));
-        assert_eq!(CORNER_2, get_char(&(1, 1), &(0, 1), &(0, 0), false));
+        assert_eq!(
+            CORNER_2,
+            Arrow::get_char(&(0, 0), &(0, 1), &(1, 1), &mut false)
+        );
+        assert_eq!(
+            CORNER_2,
+            Arrow::get_char(&(1, 1), &(0, 1), &(0, 0), &mut false)
+        );
     }
 
     #[test]
     fn should_get_corner_3() {
-        assert_eq!(CORNER_3, get_char(&(0, 1), &(0, 0), &(1, 0), false));
-        assert_eq!(CORNER_3, get_char(&(1, 0), &(0, 0), &(0, 1), false));
+        assert_eq!(
+            CORNER_3,
+            Arrow::get_char(&(0, 1), &(0, 0), &(1, 0), &mut false)
+        );
+        assert_eq!(
+            CORNER_3,
+            Arrow::get_char(&(1, 0), &(0, 0), &(0, 1), &mut false)
+        );
     }
 
     #[test]
     fn should_get_corner_4() {
-        assert_eq!(CORNER_4, get_char(&(0, 0), &(1, 0), &(1, 1), false));
-        assert_eq!(CORNER_4, get_char(&(1, 1), &(1, 0), &(0, 0), false));
+        assert_eq!(
+            CORNER_4,
+            Arrow::get_char(&(0, 0), &(1, 0), &(1, 1), &mut false)
+        );
+        assert_eq!(
+            CORNER_4,
+            Arrow::get_char(&(1, 1), &(1, 0), &(0, 0), &mut false)
+        );
     }
 
     #[test]
     fn should_get_down_arrow() {
-        assert_eq!(ARROW_DOWN, get_char(&(0, 0), &(0, 1), &(0, 2), true));
+        assert_eq!(
+            ARROW_DOWN,
+            Arrow::get_char(&(0, 0), &(0, 1), &(0, 2), &mut true)
+        );
     }
 
     #[test]
     fn should_get_up_arrow() {
-        assert_eq!(ARROW_UP, get_char(&(0, 2), &(0, 1), &(0, 0), true));
+        assert_eq!(
+            ARROW_UP,
+            Arrow::get_char(&(0, 2), &(0, 1), &(0, 0), &mut true)
+        );
     }
 
     #[test]
     fn should_get_left_arrow() {
-        assert_eq!(ARROW_LEFT, get_char(&(2, 0), &(1, 0), &(0, 0), true));
+        assert_eq!(
+            ARROW_LEFT,
+            Arrow::get_char(&(2, 0), &(1, 0), &(0, 0), &mut true)
+        );
     }
 
     #[test]
     fn should_get_right_arrow() {
-        assert_eq!(ARROW_RIGHT, get_char(&(0, 0), &(1, 0), &(2, 0), true));
-    }
-
-    #[test]
-    fn should_not_render_first_position() {
-        let mut arrow = Arrow::init();
-        arrow.points = vec![(0, 0), (1, 0), (2, 0)];
-
-        let render = arrow.draw().unwrap();
-        assert_eq!(render.len(), arrow.points.len() - 1);
+        assert_eq!(
+            ARROW_RIGHT,
+            Arrow::get_char(&(0, 0), &(1, 0), &(2, 0), &mut true)
+        );
     }
 
     #[test]
