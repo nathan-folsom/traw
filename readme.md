@@ -52,7 +52,6 @@ Things that are useful and should be added:
 - Zoom levels
 - Extend/shrink arrows when resizing boxes
 - Draw boxes in all directions, not just down and right
-- Guidelines when cursor lines up with other object 
 
 ### General
 
@@ -62,3 +61,7 @@ Things that are good for the health of the project:
 - Integration test setup
 - Build/distribution
 - Command line docs
+
+### Bugs
+
+- Fix box/arrow intersection not highlighting on hover (use overlay instead of hooking into draw?)
