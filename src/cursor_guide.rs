@@ -1,5 +1,6 @@
 use crate::{
     characters::{HORIZONTAL_BAR, VERTICAL_BAR},
+    debug_panel::debug,
     draw::{Color, Draw, Point},
 };
 use crossterm::cursor;
@@ -35,21 +36,23 @@ impl Draw for CursorGuide {
         let c_x = cursor_x as i32;
         let c_y = cursor_y as i32;
         let mut points = vec![];
-        self.points
-            .iter()
-            .for_each(|(x, y)| match (&c_x == x, &c_y == y) {
+        self.points.iter().for_each(|(_x, _y)| {
+            let x = *_x;
+            let y = *_y;
+            match (c_x == x, c_y == y) {
                 (true, false) => {
-                    for i in *y..c_y {
-                        points.push(Self::get_point(*x, i, VERTICAL_BAR));
+                    for i in (y.min(c_y) + 1)..y.max(c_y) {
+                        points.push(Self::get_point(x, i, VERTICAL_BAR));
                     }
                 }
                 (false, true) => {
-                    for i in *x..c_x {
-                        points.push(Self::get_point(i, *y, HORIZONTAL_BAR));
+                    for i in (x.min(c_x) + 1)..x.max(c_x) {
+                        points.push(Self::get_point(i, y, HORIZONTAL_BAR));
                     }
                 }
                 _ => {}
-            });
+            }
+        });
         Ok(points)
     }
 }
