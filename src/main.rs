@@ -34,7 +34,6 @@ fn main() -> std::io::Result<()> {
     let (width, height) = terminal::size()?;
     let mut renderer = Renderer::new(width, height);
     let path_arg = std::env::args().nth(1);
-    let mut debug_enabled = false;
 
     let mut file_name = "unnamed.traw".to_string();
 
@@ -59,7 +58,7 @@ fn main() -> std::io::Result<()> {
                         'r' => state.handle_drag()?,
                         'x' => state.handle_delete()?,
                         'v' => state.handle_select()?,
-                        'd' => debug_enabled = !debug_enabled,
+                        'd' => state.debug_enabled = !state.debug_enabled,
                         _ => motion_state.handle_motions(key)?,
                     },
                     Mode::Select(selection) => {
