@@ -13,22 +13,18 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Arrow {
     pub points: Vec<(i32, i32)>,
-    clear: Option<(i32, i32)>,
 }
 
 impl Arrow {
     pub fn init() -> Self {
-        Self {
-            points: vec![],
-            clear: None,
-        }
+        Self { points: vec![] }
     }
 
     pub fn update(&mut self, (cursor_x, cursor_y): (u16, u16)) {
         if self.points.len() > 1
             && self.points[self.points.len() - 2] == (cursor_x as i32, cursor_y as i32)
         {
-            self.clear = self.points.pop();
+            self.points.pop();
         } else {
             self.points.push((cursor_x as i32, cursor_y as i32));
         }
@@ -48,17 +44,6 @@ impl Draw for Arrow {
                 Color::BorderBackground
             }
         };
-
-        // TODO: remove clear logic, no longer necessary with new renderer
-        if let Some((x, y)) = self.clear {
-            points.push(Point {
-                x,
-                y,
-                character: ' ',
-                foreground: Color::Empty,
-                background: Color::EmptyBackground,
-            });
-        }
 
         let arrow_spacing = {
             if self.points.len() < 5 {
