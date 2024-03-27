@@ -39,12 +39,12 @@ impl Draw for CursorGuide {
             .iter()
             .for_each(|(x, y)| match (&c_x == x, &c_y == y) {
                 (true, false) => {
-                    for i in (y + 1)..c_y {
+                    for i in *y..c_y {
                         points.push(Self::get_point(*x, i, VERTICAL_BAR));
                     }
                 }
                 (false, true) => {
-                    for i in (x + 1)..c_x {
+                    for i in *x..c_x {
                         points.push(Self::get_point(i, *y, HORIZONTAL_BAR));
                     }
                 }
