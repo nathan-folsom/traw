@@ -1,5 +1,5 @@
 use std::{
-    cmp::Ordering::{self, Equal, Greater, Less},
+    cmp::Ordering::{Equal, Greater, Less},
     io::Result,
 };
 
@@ -80,8 +80,8 @@ impl Arrow {
             }
         };
         match (
-            Self::get_direction(prev, current),
-            Self::get_direction(current, next),
+            (prev.0.cmp(&current.0), prev.1.cmp(&current.1)),
+            (current.0.cmp(&next.0), current.1.cmp(&next.1)),
         ) {
             ((Equal, Greater), (Equal, Greater)) => get_arrow(VERTICAL_BAR, ARROW_UP),
             ((Equal, Less), (Equal, Less)) => get_arrow(VERTICAL_BAR, ARROW_DOWN),
@@ -93,10 +93,6 @@ impl Arrow {
             ((Equal, Less), (Less, Equal)) | ((Greater, Equal), (Equal, Greater)) => CORNER_2,
             _ => ' ',
         }
-    }
-
-    fn get_direction(a: &(i32, i32), b: &(i32, i32)) -> (Ordering, Ordering) {
-        (a.0.cmp(&b.0), a.1.cmp(&b.1))
     }
 }
 
