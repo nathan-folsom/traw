@@ -27,7 +27,6 @@ pub struct Rectangle {
     pub width: i32,
     pub height: i32,
     pub text: Vec<char>,
-    shrink: Shrink,
 }
 
 impl Rectangle {
@@ -38,7 +37,6 @@ impl Rectangle {
             width: 1,
             height: 1,
             text: vec![],
-            shrink: Shrink::None,
         }
     }
 
@@ -119,55 +117,6 @@ impl Draw for Rectangle {
                     background,
                 });
             }
-        }
-
-        // TODO: Remove shrink, no longer needed with new renderer
-        match self.shrink {
-            Shrink::Right => {
-                for y in 0..self.height {
-                    points.push(Point {
-                        x: self.x + self.width,
-                        y: self.y + y,
-                        character: ' ',
-                        foreground: Color::Empty,
-                        background: Color::EmptyBackground,
-                    });
-                }
-            }
-            Shrink::Bottom => {
-                for x in 0..self.width {
-                    points.push(Point {
-                        x: self.x + x,
-                        y: self.y + self.height,
-                        character: ' ',
-                        foreground: Color::Empty,
-                        background: Color::EmptyBackground,
-                    });
-                }
-            }
-            Shrink::Top => {
-                for x in 0..self.width {
-                    points.push(Point {
-                        x: self.x + x,
-                        y: self.y - 1,
-                        character: ' ',
-                        foreground: Color::Empty,
-                        background: Color::EmptyBackground,
-                    });
-                }
-            }
-            Shrink::Left => {
-                for y in 0..self.height {
-                    points.push(Point {
-                        x: self.x - 1,
-                        y: self.y + y,
-                        character: ' ',
-                        foreground: Color::Empty,
-                        background: Color::EmptyBackground,
-                    });
-                }
-            }
-            Shrink::None => {}
         }
 
         Ok(points)
@@ -316,15 +265,6 @@ impl CursorGuide for Rectangle {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
-enum Shrink {
-    Top,
-    Bottom,
-    Left,
-    Right,
-    None,
-}
-
 #[cfg(test)]
 mod test {
     use super::Rectangle;
@@ -336,7 +276,6 @@ mod test {
             y: 5,
             width: 4,
             height: 4,
-            shrink: super::Shrink::None,
             text: vec!['0', '1', '2'],
         };
         let pos = rect.get_inner_cursor_position();
