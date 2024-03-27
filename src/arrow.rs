@@ -45,14 +45,7 @@ impl Draw for Arrow {
             }
         };
 
-        let arrow_spacing = {
-            if self.points.len() < 5 {
-                2
-            } else {
-                5
-            }
-        };
-
+        let mut add_arrow = false;
         self.points.iter().enumerate().for_each(|(i, point)| {
             if i == 0 {
                 return;
@@ -73,10 +66,21 @@ impl Draw for Arrow {
                 return;
             }
 
+            if i == self.points.len() / 2 {
+                add_arrow = true;
+            }
+            let character = get_char(&prev, point, &self.points[i + 1], add_arrow);
+            if [ARROW_UP, ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT]
+                .iter()
+                .any(|c| c == &character)
+            {
+                add_arrow = false;
+            }
+
             points.push(Point {
                 x: point.0,
                 y: point.1,
-                character: get_char(&prev, point, &self.points[i + 1], i % arrow_spacing == 0),
+                character,
                 foreground,
                 background,
             });
@@ -98,8 +102,8 @@ impl CursorIntersect for Arrow {
     }
 }
 
-fn get_char(prev: &(i32, i32), current: &(i32, i32), next: &(i32, i32), use_arrow: bool) -> char {
-    let get_arrow = |normal: char, arrow: char| match use_arrow {
+fn get_char(prev: &(i32, i32), current: &(i32, i32), next: &(i32, i32), try_arrow: bool) -> char {
+    let get_arrow = |normal: char, arrow: char| match try_arrow {
         false => normal,
         true => arrow,
     };
