@@ -6,10 +6,10 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
-use draw::Renderer;
 use mode::Mode;
 use motion_state::MotionState;
 use persistence::{load, save};
+use renderer::Renderer;
 use state::State;
 
 mod arrow;
@@ -21,6 +21,7 @@ mod mode;
 mod motion_state;
 mod persistence;
 mod rectangle;
+mod renderer;
 mod shape;
 mod state;
 mod status_bar;
