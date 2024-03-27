@@ -52,6 +52,7 @@ Things that are useful and should be added:
 - Zoom levels
 - Extend/shrink arrows when resizing boxes
 - Draw boxes in all directions, not just down and right
+- Guidelines when cursor lines up with other object 
 
 ### General
 
