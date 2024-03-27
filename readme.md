@@ -48,7 +48,6 @@ Things that are useful and should be added:
 - Animations: e.g. hover background transition instead of instant change
 - Color theme
 - Rerender when terminal resized
-- Arrow characters to show direction
 - Escape key to exit modes, as well as enter
 - Zoom levels
 - Extend/shrink arrows when resizing boxes
