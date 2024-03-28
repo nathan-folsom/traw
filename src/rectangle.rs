@@ -174,11 +174,11 @@ impl Drag for Rectangle {
 pub trait Drag {
     fn rect(&mut self) -> (&mut i32, &mut i32, &mut i32, &mut i32);
 
-    fn drag_corner(&mut self, anchor: &Anchor) -> std::io::Result<()> {
+    fn drag_corner(&mut self, anchor: &mut Anchor) -> std::io::Result<()> {
         let (c_x, c_y) = cursor::position()?;
         let cursor_x = c_x as i32;
         let cursor_y = c_y as i32;
-
+        self.adjust_anchor(anchor, &cursor_x, &cursor_y);
         match anchor {
             Anchor::TopLeft => {
                 self.drag_top(cursor_y);
@@ -199,6 +199,42 @@ pub trait Drag {
         }
 
         Ok(())
+    }
+
+    /// Allow dragging to continue even when the cursor passes to the "other side" of
+    /// the box border
+    fn adjust_anchor(&mut self, anchor: &mut Anchor, cursor_x: &i32, cursor_y: &i32) {
+        let (x, y, width, height) = self.rect();
+        match anchor {
+            Anchor::TopLeft => {
+                if cursor_x > x && width == &1 {
+                    *anchor = Anchor::TopRight;
+                } else if cursor_y > y && height == &1 {
+                    *anchor = Anchor::BottomLeft;
+                }
+            }
+            Anchor::TopRight => {
+                if cursor_x < x && width == &1 {
+                    *anchor = Anchor::TopLeft;
+                } else if cursor_y > y && height == &1 {
+                    *anchor = Anchor::BottomRight;
+                }
+            }
+            Anchor::BottomLeft => {
+                if cursor_x > x && width == &1 {
+                    *anchor = Anchor::BottomRight;
+                } else if cursor_y < y && height == &1 {
+                    *anchor = Anchor::TopLeft;
+                }
+            }
+            Anchor::BottomRight => {
+                if cursor_x < x && width == &1 {
+                    *anchor = Anchor::BottomLeft;
+                } else if cursor_y < y && height == &1 {
+                    *anchor = Anchor::TopRight;
+                }
+            }
+        }
     }
 
     fn drag_right(&mut self, cursor_x: i32) {

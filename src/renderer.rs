@@ -184,7 +184,7 @@ impl Renderer {
                 self.render(arrow.draw()?)?;
             }
             Mode::Select(selection) => {
-                selection.drag_corner(&Anchor::BottomRight)?;
+                selection.drag_corner(&mut Anchor::BottomRight)?;
                 self.render_overlay(selection)?;
             }
         }
