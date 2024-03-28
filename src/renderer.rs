@@ -106,7 +106,7 @@ impl Renderer {
     }
 
     pub fn render_overlay(&mut self, overlay: &impl DrawOverlay) -> std::io::Result<()> {
-        let (points, foreground, background) = overlay.draw();
+        let (points, foreground, background) = overlay.draw_overlay()?;
         for OverlayPoint { x, y } in points {
             let (_, current_foreground, current_background) =
                 &mut self.state[x as usize][y as usize];
@@ -189,6 +189,7 @@ impl Renderer {
             }
         }
         self.render_intersections(state)?;
+        self.render_overlay(state)?;
 
         self.finish_frame()?;
 

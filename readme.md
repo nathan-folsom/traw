@@ -63,4 +63,3 @@ Things that are good for the health of the project:
 
 ### Bugs
 
-- Fix box/arrow intersection not highlighting on hover (use overlay instead of hooking into draw?)

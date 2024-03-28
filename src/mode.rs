@@ -1,3 +1,5 @@
+use std::io::Result;
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -40,7 +42,7 @@ impl Drag for Selection {
 }
 
 impl DrawOverlay for Selection {
-    fn draw(&self) -> (Vec<OverlayPoint>, Option<Color>, Option<Color>) {
+    fn draw_overlay(&self) -> Result<(Vec<OverlayPoint>, Option<Color>, Option<Color>)> {
         let mut points = vec![];
         let background = Some(Color::BorderBackgroundHover);
 
@@ -53,6 +55,6 @@ impl DrawOverlay for Selection {
             }
         }
 
-        (points, None, background)
+        Ok((points, None, background))
     }
 }

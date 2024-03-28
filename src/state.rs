@@ -1,4 +1,4 @@
-use std::io::stdout;
+use std::io::{stdout, Result};
 
 use crossterm::{
     cursor::{self},
@@ -11,9 +11,9 @@ use crate::{
     cursor_guide::CursorGuide,
     debug_panel::debug,
     draw::{
-        CursorIntersect, Draw,
+        Color, CursorIntersect, Draw, DrawOverlay,
         EdgeIntersection::{Corner, Side},
-        Intersection, Point,
+        Intersection, OverlayPoint, Point,
     },
     mode::{Anchor, Mode, Selection},
     rectangle::Rectangle,
@@ -178,5 +178,33 @@ impl Draw for State {
             points.push(shape.draw()?);
         }
         Ok(points.into_iter().flatten().collect())
+    }
+}
+
+impl DrawOverlay for State {
+    fn draw_overlay(
+        &self,
+    ) -> Result<(
+        Vec<crate::draw::OverlayPoint>,
+        Option<crate::draw::Color>,
+        Option<crate::draw::Color>,
+    )> {
+        let mut overlay_points: Vec<Vec<OverlayPoint>> = vec![];
+        for shape in &self.shapes {
+            if shape.hovered()? {
+                overlay_points.push(
+                    shape
+                        .draw()?
+                        .into_iter()
+                        .map(|p| OverlayPoint { x: p.x, y: p.y })
+                        .collect(),
+                )
+            }
+        }
+        Ok((
+            overlay_points.into_iter().flatten().collect(),
+            None,
+            Some(Color::BorderBackgroundHover),
+        ))
     }
 }

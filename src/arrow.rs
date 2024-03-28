@@ -36,7 +36,6 @@ impl Arrow {
 
     const FG: Color = Color::Border;
     const BG: Color = Color::BorderBackground;
-    const BG_HOVER: Color = Color::BorderBackgroundHover;
 
     fn get_endpoint(&self, point: &(i32, i32), neighbor: &(i32, i32)) -> Result<Point<i32>> {
         self.get_point(
@@ -49,22 +48,13 @@ impl Arrow {
     }
 
     fn get_point(&self, (x, y): &(i32, i32), c: char) -> Result<Point<i32>> {
-        let (foreground, background) = self.get_color()?;
         Ok(Point {
             x: *x,
             y: *y,
             character: c,
-            foreground,
-            background,
+            foreground: Self::FG,
+            background: Self::BG,
         })
-    }
-
-    fn get_color(&self) -> Result<(Color, Color)> {
-        if self.hovered()? {
-            Ok((Self::FG, Self::BG_HOVER))
-        } else {
-            Ok((Self::FG, Self::BG))
-        }
     }
 
     fn get_char(

@@ -1,6 +1,5 @@
 use crate::{
     characters::{HORIZONTAL_BAR, VERTICAL_BAR},
-    debug_panel::debug,
     draw::{Color, Draw, Point},
 };
 use crossterm::cursor;

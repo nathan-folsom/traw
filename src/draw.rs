@@ -1,3 +1,5 @@
+use std::io::Result;
+
 use crossterm::cursor;
 
 use crate::mode::Anchor;
@@ -14,7 +16,7 @@ pub trait DrawSticky {
 
 /// Used for changing the color of rendered content
 pub trait DrawOverlay {
-    fn draw(&self) -> (Vec<OverlayPoint>, Option<Color>, Option<Color>);
+    fn draw_overlay(&self) -> Result<(Vec<OverlayPoint>, Option<Color>, Option<Color>)>;
 }
 
 /// Used for determining how the cursor aligns with an object
