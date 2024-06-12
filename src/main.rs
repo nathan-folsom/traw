@@ -1,7 +1,7 @@
 use std::io::stdout;
 
 use crossterm::{
-    event::{self, KeyCode},
+    event::{self, KeyCode, KeyModifiers},
     execute,
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
@@ -20,6 +20,7 @@ mod draw;
 mod grid_background;
 mod mode;
 mod motion_state;
+mod mutate;
 mod persistence;
 mod rectangle;
 mod renderer;
@@ -55,10 +56,17 @@ fn main() -> std::io::Result<()> {
                         'q' => break,
                         's' => save(&state, &file_name)?,
                         'i' => state.handle_insert()?,
-                        'r' => state.handle_drag()?,
+                        'r' => {
+                            if key_event.modifiers.contains(KeyModifiers::CONTROL) {
+                                state.redo();
+                            } else {
+                                state.handle_drag()?;
+                            }
+                        }
                         'x' => state.handle_delete()?,
                         'v' => state.handle_select()?,
                         'd' => state.debug_enabled = !state.debug_enabled,
+                        'u' => state.undo(),
                         _ => motion_state.handle_motions(key)?,
                     },
                     Mode::Select(selection) => {

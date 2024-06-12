@@ -30,6 +30,8 @@ traw [options]
   - (select mode) Copy selection and end select
   - (draw mode) End draw mode
 - 'd' (normal mode) - Toggle debug panel
+- 'u' (normal mode) - Undo
+- 'CTRL-r' (normal mode) - Redo
 
 ## To-do
 
@@ -44,6 +46,7 @@ Things that are useful and should be added:
 - Box text justification and alignment
 - Flexboxy layout
 - Undo/redo
+  - for shape editing
 - Hover effects: e.g. change char under cursor if action is available
 - Animations: e.g. hover background transition instead of instant change
 - Color theme

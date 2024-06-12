@@ -16,6 +16,7 @@ use crate::{
         Intersection, OverlayPoint, Point,
     },
     mode::{Anchor, Mode, Selection},
+    mutate::Mutate,
     rectangle::Rectangle,
     shape::Shape,
 };
@@ -25,6 +26,8 @@ pub struct State {
     pub shapes: Vec<Shape>,
     pub mode: Mode,
     pub debug_enabled: bool,
+    undo_stack: Vec<StateChange>,
+    redo_stack: Vec<StateChange>,
 }
 
 impl State {
@@ -33,6 +36,8 @@ impl State {
             shapes: vec![],
             mode: Mode::Normal,
             debug_enabled: false,
+            undo_stack: Vec::new(),
+            redo_stack: Vec::new(),
         }
     }
 
@@ -100,16 +105,16 @@ impl State {
                 if rect.text.is_empty() {
                     self.enter_text_mode(rect)?;
                 } else {
-                    self.shapes.push(Shape::Rectangle(rect));
+                    self.add_shape(Shape::Rectangle(rect));
                     self.enter_mode(Mode::Normal);
                 }
             }
             Mode::Text(rect) => {
-                self.shapes.push(Shape::Rectangle(rect));
+                self.add_shape(Shape::Rectangle(rect));
                 queue!(stdout(), cursor::SetCursorStyle::SteadyBlock)?;
             }
             Mode::DrawArrow(arrow) => {
-                self.shapes.push(Shape::Arrow(arrow));
+                self.add_shape(Shape::Arrow(arrow));
             }
             Mode::Select(_) => {
                 self.enter_mode(Mode::Normal);
@@ -118,6 +123,11 @@ impl State {
         }
 
         Ok(())
+    }
+
+    fn add_shape(&mut self, shape: Shape) {
+        let mx = self.mutate(StateChange::AddShape(shape));
+        self.undo_stack.push(mx);
     }
 
     fn enter_text_mode(&mut self, rect: Rectangle) -> std::io::Result<()> {
@@ -139,7 +149,8 @@ impl State {
             let (intersection, i) = self.get_cursor_intersection()?;
             match intersection {
                 Intersection::Edge(_) | Intersection::Inner => {
-                    self.shapes.remove(i);
+                    let mx = self.mutate(StateChange::DeleteShape(i));
+                    self.undo_stack.push(mx);
                 }
                 _ => {}
             }
@@ -168,6 +179,20 @@ impl State {
             rect.on_backspace()?;
         }
         Ok(())
+    }
+
+    pub fn undo(&mut self) {
+        if let Some(undo) = self.undo_stack.pop() {
+            let redo = self.mutate(undo);
+            self.redo_stack.push(redo);
+        }
+    }
+
+    pub fn redo(&mut self) {
+        if let Some(redo) = self.redo_stack.pop() {
+            let undo = self.mutate(redo);
+            self.undo_stack.push(undo);
+        }
     }
 }
 
@@ -207,4 +232,27 @@ impl DrawOverlay for State {
             Some(Color::BorderBackgroundHover),
         ))
     }
+}
+
+impl Mutate for State {
+    type Mutation = StateChange;
+    fn mutate(&mut self, mx: Self::Mutation) -> Self::Mutation {
+        match mx {
+            StateChange::DeleteShape(index) => {
+                let removed = self.shapes.remove(index);
+                StateChange::AddShape(removed)
+            }
+            StateChange::AddShape(shape) => {
+                self.shapes.push(shape);
+                let index = self.shapes.len() - 1;
+                StateChange::DeleteShape(index)
+            }
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum StateChange {
+    DeleteShape(usize),
+    AddShape(Shape),
 }
