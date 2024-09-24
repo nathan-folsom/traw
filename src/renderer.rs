@@ -8,6 +8,7 @@ use crossterm::{
 
 use crate::{
     characters::{INTERSECTION_DOWN, INTERSECTION_LEFT, INTERSECTION_RIGHT, INTERSECTION_UP},
+    cursor::cursor_pos,
     debug_panel::{DebugPanel, DEBUG_PANEL_HEIGHT},
     draw::{
         Color, CursorIntersect, Draw, DrawOverlay, DrawSticky, Intersection, OverlayPoint, Point,
@@ -180,7 +181,7 @@ impl Renderer {
                 self.render(rect.draw()?)?;
             }
             Mode::DrawArrow(arrow) => {
-                arrow.update(cursor::position()?);
+                arrow.update(cursor_pos());
                 self.render(arrow.draw()?)?;
             }
             Mode::Select(selection) => {

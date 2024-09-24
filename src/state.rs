@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     arrow::Arrow,
+    cursor::cursor_pos,
     cursor_guide::CursorGuide,
     debug_panel::debug,
     draw::{
@@ -43,7 +44,7 @@ impl State {
 
     pub fn handle_insert(&mut self) -> std::io::Result<()> {
         if let Mode::Normal = &self.mode {
-            let (x, y) = cursor::position()?;
+            let (x, y) = cursor_pos();
             let (intersection, i) = self.get_cursor_intersection()?;
 
             match intersection {
@@ -88,7 +89,7 @@ impl State {
     }
 
     pub fn handle_select(&mut self) -> std::io::Result<()> {
-        let (cursor_x, cursor_y) = cursor::position()?;
+        let (cursor_x, cursor_y) = cursor_pos();
         self.enter_mode(Mode::Select(Selection {
             x: cursor_x as i32,
             y: cursor_y as i32,

@@ -6,6 +6,7 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
+use cursor::start_frame;
 use mode::Mode;
 use motion_state::MotionState;
 use persistence::{load, save};
@@ -14,6 +15,7 @@ use state::State;
 
 mod arrow;
 mod characters;
+mod cursor;
 mod cursor_guide;
 mod debug_panel;
 mod draw;
@@ -46,6 +48,7 @@ fn main() -> std::io::Result<()> {
     renderer.render_frame(&mut state)?;
 
     loop {
+        start_frame();
         if let event::Event::Key(key_event) = event::read()? {
             match key_event.code {
                 KeyCode::Char(key) => match &mut state.mode {
@@ -101,7 +104,7 @@ fn main() -> std::io::Result<()> {
 
 fn init() -> std::io::Result<()> {
     enable_raw_mode()?;
-
+    start_frame();
     execute!(
         stdout(),
         terminal::EnterAlternateScreen,

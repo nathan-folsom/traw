@@ -14,6 +14,7 @@ use crate::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
+    cursor::cursor_pos,
     cursor_guide::GuidePoint,
     draw::{Color, CursorIntersect, Draw, EdgeIntersection::Corner, Intersection, Point},
     mode::Anchor,
@@ -168,7 +169,7 @@ pub trait Drag {
     fn rect(&mut self) -> (&mut i32, &mut i32, &mut i32, &mut i32);
 
     fn drag_corner(&mut self, anchor: &mut Anchor) -> std::io::Result<()> {
-        let (c_x, c_y) = cursor::position()?;
+        let (c_x, c_y) = cursor_pos();
         let cursor_x = c_x as i32;
         let cursor_y = c_y as i32;
         self.adjust_anchor(anchor, &cursor_x, &cursor_y);

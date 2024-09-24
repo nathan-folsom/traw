@@ -1,8 +1,8 @@
 use crate::{
     characters::{HORIZONTAL_BAR, VERTICAL_BAR},
+    cursor::cursor_pos,
     draw::{Color, Draw, Point},
 };
-use crossterm::cursor;
 
 pub struct CursorGuide {
     points: Vec<(i32, i32)>,
@@ -31,7 +31,7 @@ impl CursorGuide {
 
 impl Draw for CursorGuide {
     fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
-        let (cursor_x, cursor_y) = cursor::position()?;
+        let (cursor_x, cursor_y) = cursor_pos();
         let c_x = cursor_x as i32;
         let c_y = cursor_y as i32;
         let mut points = vec![];
