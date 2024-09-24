@@ -8,7 +8,7 @@ use crossterm::{
 
 use crate::{
     characters::{INTERSECTION_DOWN, INTERSECTION_LEFT, INTERSECTION_RIGHT, INTERSECTION_UP},
-    debug_panel::DebugPanel,
+    debug_panel::{DebugPanel, DEBUG_PANEL_HEIGHT},
     draw::{
         Color, CursorIntersect, Draw, DrawOverlay, DrawSticky, Intersection, OverlayPoint, Point,
     },
@@ -158,7 +158,7 @@ impl Renderer {
     pub fn render_frame(&mut self, state: &mut State) -> std::io::Result<()> {
         self.status_bar.update(&state.mode, {
             if state.debug_enabled {
-                10
+                DEBUG_PANEL_HEIGHT as u16
             } else {
                 0
             }
