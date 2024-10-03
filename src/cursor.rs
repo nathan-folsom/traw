@@ -6,6 +6,14 @@ use std::{
 
 use crossterm::{cursor, queue};
 
+/// Ideally crossterm would keep track of the cursor position for us, but it seems
+/// like there are some unfortunate performance side effects if we try and call
+/// crossterm::cursor::position, possibly because crossterm is flushing buffered commands every time
+/// we call it https://github.com/crossterm-rs/crossterm/issues/459
+///
+/// So instead we track the cursor position locally and try to keep it in sync with where the
+/// cursor is being moved in stdout
+
 static CURSOR: OnceLock<RwLock<Cursor>> = OnceLock::new();
 
 struct Cursor {
