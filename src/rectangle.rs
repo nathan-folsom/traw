@@ -1,20 +1,12 @@
 use serde::{Deserialize, Serialize};
-use std::{
-    cmp::Ordering::{Greater, Less},
-    io::stdout,
-};
-
-use crossterm::{
-    cursor::{self},
-    queue,
-};
+use std::cmp::Ordering::{Greater, Less};
 
 use crate::{
     characters::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
-    cursor::cursor_pos,
+    cursor::{cursor_pos, set_position},
     cursor_guide::GuidePoint,
     draw::{Color, CursorIntersect, Draw, EdgeIntersection::Corner, Intersection, Point},
     mode::Anchor,
@@ -43,14 +35,14 @@ impl Rectangle {
     pub fn on_char(&mut self, key: char) -> std::io::Result<()> {
         self.text.push(key);
         let (next_x, next_y) = self.get_inner_cursor_position();
-        queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
+        set_position(next_x as u16, next_y as u16);
         Ok(())
     }
 
     pub fn on_backspace(&mut self) -> std::io::Result<()> {
         self.text.pop();
         let (next_x, next_y) = self.get_inner_cursor_position();
-        queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
+        set_position(next_x as u16, next_y as u16);
         Ok(())
     }
 

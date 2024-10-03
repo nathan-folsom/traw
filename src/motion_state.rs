@@ -1,6 +1,4 @@
-use std::io::stdout;
-
-use crossterm::{cursor, queue};
+use crate::cursor::adjust_position;
 
 pub struct MotionState {
     count: Vec<char>,
@@ -11,18 +9,19 @@ impl MotionState {
         Self { count: vec![] }
     }
     pub fn handle_motions(&mut self, key: char) -> std::io::Result<()> {
+        let move_count = self.get_count() as i16;
         match key {
             'h' => {
-                queue!(stdout(), cursor::MoveLeft(self.get_count()))?;
+                adjust_position(-move_count, 0);
             }
             'j' => {
-                queue!(stdout(), cursor::MoveDown(self.get_count()))?;
+                adjust_position(0, move_count);
             }
             'k' => {
-                queue!(stdout(), cursor::MoveUp(self.get_count()))?;
+                adjust_position(0, -move_count);
             }
             'l' => {
-                queue!(stdout(), cursor::MoveRight(self.get_count()))?;
+                adjust_position(move_count, 0);
             }
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => self.count.push(key),
             _ => {}

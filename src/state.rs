@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     arrow::Arrow,
-    cursor::cursor_pos,
+    cursor::{cursor_pos, set_position},
     cursor_guide::CursorGuide,
     debug_panel::debug,
     draw::{
@@ -135,7 +135,7 @@ impl State {
         queue!(stdout(), cursor::SetCursorStyle::SteadyBar)?;
         let (next_x, next_y) = rect.get_inner_cursor_position();
         self.enter_mode(Mode::Text(rect));
-        queue!(stdout(), cursor::MoveTo(next_x as u16, next_y as u16))?;
+        set_position(next_x as u16, next_y as u16);
 
         Ok(())
     }

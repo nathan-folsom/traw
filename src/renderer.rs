@@ -8,7 +8,7 @@ use crossterm::{
 
 use crate::{
     characters::{INTERSECTION_DOWN, INTERSECTION_LEFT, INTERSECTION_RIGHT, INTERSECTION_UP},
-    cursor::cursor_pos,
+    cursor::{cursor_pos, set_position},
     debug_panel::{DebugPanel, DEBUG_PANEL_HEIGHT},
     draw::{
         Color, CursorIntersect, Draw, DrawOverlay, DrawSticky, Intersection, OverlayPoint, Point,
@@ -75,9 +75,9 @@ impl Renderer {
                             || foreground != &prev_foreground
                             || background != &prev_background
                         {
+                            set_position(x as u16, y as u16);
                             queue!(
                                 stdout(),
-                                cursor::MoveTo(x as u16, y as u16),
                                 SetForegroundColor(foreground.into()),
                                 SetBackgroundColor(background.into()),
                                 Print(character)
