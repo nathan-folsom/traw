@@ -2,13 +2,13 @@ use std::io::{stdout, Write};
 
 use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::{
-    cursor, queue,
+    queue,
     style::{Print, SetBackgroundColor, SetForegroundColor},
 };
 
 use crate::{
     characters::{INTERSECTION_DOWN, INTERSECTION_LEFT, INTERSECTION_RIGHT, INTERSECTION_UP},
-    cursor::{cursor_pos, set_position},
+    cursor::{cursor_pos, restore_position, save_position, set_position},
     debug_panel::{DebugPanel, DEBUG_PANEL_HEIGHT},
     draw::{
         Color, CursorIntersect, Draw, DrawOverlay, DrawSticky, Intersection, OverlayPoint, Point,
@@ -62,7 +62,7 @@ impl Renderer {
     }
 
     pub fn finish_frame(&self) -> std::io::Result<()> {
-        queue!(stdout(), cursor::SavePosition)?;
+        save_position();
         self.state
             .iter()
             .enumerate()
@@ -88,7 +88,7 @@ impl Renderer {
                     .collect::<std::io::Result<Vec<_>>>()
             })
             .collect::<std::io::Result<Vec<_>>>()?;
-        queue!(stdout(), cursor::RestorePosition)?;
+        restore_position();
         Ok(())
     }
 
