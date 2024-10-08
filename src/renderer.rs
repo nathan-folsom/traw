@@ -29,6 +29,7 @@ pub struct Renderer {
     debug_panel: DebugPanel,
     width: u16,
     height: u16,
+    is_first_frame: bool,
 }
 
 #[derive(PartialEq, Clone)]
@@ -48,6 +49,7 @@ impl Renderer {
             debug_panel: Default::default(),
             width,
             height,
+            is_first_frame: true,
         }
     }
 
@@ -112,10 +114,12 @@ impl Renderer {
         }
         self.render_intersections(state)?;
         self.render_overlay(state)?;
-
         self.finish_frame()?;
-
+        if self.is_first_frame {
+            self.is_first_frame = false;
+        }
         stdout().flush()?;
+
         Ok(())
     }
 
@@ -256,7 +260,7 @@ impl Renderer {
                     .enumerate()
                     .map(|(y, point)| {
                         let prev = &self.prev_state[x][y];
-                        if point != prev {
+                        if point != prev || self.is_first_frame {
                             set_position(x as u16, y as u16);
                             queue!(
                                 stdout(),
