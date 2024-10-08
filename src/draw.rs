@@ -83,8 +83,8 @@ pub enum Color {
     Guide,
 }
 
-impl From<&Color> for crossterm::style::Color {
-    fn from(value: &Color) -> Self {
+impl From<Color> for crossterm::style::Color {
+    fn from(value: Color) -> Self {
         let (r, g, b) = match value {
             Color::Border => (255, 255, 255),
             Color::BorderBackground => (0, 0, 0),

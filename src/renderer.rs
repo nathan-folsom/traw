@@ -22,13 +22,20 @@ use crate::{
 };
 
 pub struct Renderer {
-    state: Vec<Vec<(char, Color, Color)>>,
-    prev_state: Vec<Vec<(char, Color, Color)>>,
+    state: Vec<Vec<StatePoint>>,
+    prev_state: Vec<Vec<StatePoint>>,
     status_bar: StatusBar,
     grid_background: GridBackground,
     debug_panel: DebugPanel,
     width: u16,
     height: u16,
+}
+
+#[derive(PartialEq, Clone)]
+struct StatePoint {
+    character: char,
+    foreground: Color,
+    background: Color,
 }
 
 impl Renderer {
@@ -44,96 +51,6 @@ impl Renderer {
         }
     }
 
-    pub fn start_frame(&mut self) {
-        let mut empty = vec![];
-        for _ in 0..self.width {
-            let mut cols = vec![];
-            for _ in 0..self.height {
-                cols.push((' ', Color::Empty, Color::EmptyBackground));
-            }
-            empty.push(cols.clone());
-        }
-        if self.prev_state.is_empty() {
-            self.prev_state = empty.clone();
-        } else {
-            std::mem::swap(&mut self.prev_state, &mut self.state);
-        }
-        self.state = empty;
-    }
-
-    pub fn finish_frame(&self) -> std::io::Result<()> {
-        save_position();
-        self.state
-            .iter()
-            .enumerate()
-            .map(|(x, row)| {
-                row.iter()
-                    .enumerate()
-                    .map(|(y, (character, foreground, background))| {
-                        let (prev_char, prev_foreground, prev_background) = self.prev_state[x][y];
-                        if character != &prev_char
-                            || foreground != &prev_foreground
-                            || background != &prev_background
-                        {
-                            set_position(x as u16, y as u16);
-                            queue!(
-                                stdout(),
-                                SetForegroundColor(foreground.into()),
-                                SetBackgroundColor(background.into()),
-                                Print(character)
-                            )?;
-                        }
-                        std::io::Result::Ok(())
-                    })
-                    .collect::<std::io::Result<Vec<_>>>()
-            })
-            .collect::<std::io::Result<Vec<_>>>()?;
-        restore_position();
-        Ok(())
-    }
-
-    pub fn render(&mut self, points: Vec<Point<i32>>) -> std::io::Result<()> {
-        for point in points {
-            self.draw_at(point)?;
-        }
-        Ok(())
-    }
-
-    pub fn render_sticky(&mut self, points: Vec<Point<u16>>) -> std::io::Result<()> {
-        for point in points {
-            self.draw_at(point.into())?;
-        }
-        Ok(())
-    }
-
-    pub fn render_overlay(&mut self, overlay: &impl DrawOverlay) -> std::io::Result<()> {
-        let (points, foreground, background) = overlay.draw_overlay()?;
-        for OverlayPoint { x, y } in points {
-            let (_, current_foreground, current_background) =
-                &mut self.state[x as usize][y as usize];
-            if let Some(fg) = foreground {
-                *current_foreground = fg;
-            }
-            if let Some(bg) = background {
-                *current_background = bg;
-            }
-        }
-        Ok(())
-    }
-
-    fn draw_at(&mut self, point: Point<i32>) -> std::io::Result<()> {
-        let Point {
-            x,
-            y,
-            character,
-            foreground,
-            background,
-        } = point;
-        self.state[x as usize][y as usize] = (character, foreground, background);
-
-        Ok(())
-    }
-
     pub fn handle_yank(&self, selection: &Selection) {
         let mut ctx = ClipboardContext::new().unwrap();
         let mut content = vec![];
@@ -141,7 +58,11 @@ impl Renderer {
             for col in 0..selection.width {
                 let x = col + selection.x;
                 let y = row + selection.y;
-                let (character, foreground, background) = self.state[x as usize][y as usize];
+                let StatePoint {
+                    character,
+                    foreground,
+                    background,
+                } = self.state[x as usize][y as usize];
                 let is_background = matches!(foreground, Color::Grid)
                     && matches!(background, Color::EmptyBackground);
                 if is_background {
@@ -195,6 +116,58 @@ impl Renderer {
         self.finish_frame()?;
 
         stdout().flush()?;
+        Ok(())
+    }
+
+    pub fn start_frame(&mut self) {
+        let mut empty = vec![];
+        for _ in 0..self.width {
+            let mut cols = vec![];
+            for _ in 0..self.height {
+                cols.push(StatePoint {
+                    character: ' ',
+                    foreground: Color::Empty,
+                    background: Color::EmptyBackground,
+                });
+            }
+            empty.push(cols.clone());
+        }
+        if self.prev_state.is_empty() {
+            self.prev_state = empty.clone();
+        } else {
+            std::mem::swap(&mut self.prev_state, &mut self.state);
+        }
+        self.state = empty;
+    }
+
+    pub fn render(&mut self, points: Vec<Point<i32>>) -> std::io::Result<()> {
+        for point in points {
+            self.draw_at(point)?;
+        }
+        Ok(())
+    }
+
+    pub fn render_sticky(&mut self, points: Vec<Point<u16>>) -> std::io::Result<()> {
+        for point in points {
+            self.draw_at(point.into())?;
+        }
+        Ok(())
+    }
+
+    fn draw_at(&mut self, point: Point<i32>) -> std::io::Result<()> {
+        let Point {
+            x,
+            y,
+            character,
+            foreground,
+            background,
+        } = point;
+        self.state[x as usize][y as usize] = StatePoint {
+            character,
+            foreground,
+            background,
+        };
+
         Ok(())
     }
 
@@ -257,5 +230,47 @@ impl Renderer {
             }
         });
         self.render(intersection_points)
+    }
+
+    pub fn render_overlay(&mut self, overlay: &impl DrawOverlay) -> std::io::Result<()> {
+        let (points, foreground, background) = overlay.draw_overlay()?;
+        for OverlayPoint { x, y } in points {
+            let point = &mut self.state[x as usize][y as usize];
+            if let Some(fg) = foreground {
+                point.foreground = fg;
+            }
+            if let Some(bg) = background {
+                point.background = bg;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn finish_frame(&self) -> std::io::Result<()> {
+        save_position();
+        self.state
+            .iter()
+            .enumerate()
+            .map(|(x, row)| {
+                row.iter()
+                    .enumerate()
+                    .map(|(y, point)| {
+                        let prev = &self.prev_state[x][y];
+                        if point != prev {
+                            set_position(x as u16, y as u16);
+                            queue!(
+                                stdout(),
+                                SetForegroundColor(point.foreground.into()),
+                                SetBackgroundColor(point.background.into()),
+                                Print(point.character)
+                            )?;
+                        }
+                        std::io::Result::Ok(())
+                    })
+                    .collect::<std::io::Result<Vec<_>>>()
+            })
+            .collect::<std::io::Result<Vec<_>>>()?;
+        restore_position();
+        Ok(())
     }
 }
