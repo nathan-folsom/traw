@@ -20,8 +20,8 @@ const ARROW: &str = "Arrow";
 const SELECT: &str = "Select";
 
 impl StatusBar {
-    pub fn update(&mut self, mode: &Mode, y_offset: u16) -> std::io::Result<()> {
-        self.mode_text = match mode {
+    pub fn new(mode: &Mode, y_offset: u16) -> Self {
+        let mode_text = match mode {
             Mode::Normal => NORMAL,
             Mode::DrawRectangle(_, _) => DRAW,
             Mode::DrawArrow(_) => ARROW,
@@ -30,10 +30,14 @@ impl StatusBar {
         };
 
         let (c_x, c_y) = cursor_pos();
-        self.cursor_text = format!("{}:{}", c_x, c_y);
-        self.y = y_offset + 1;
+        let cursor_text = format!("{}:{}", c_x, c_y);
+        let y = y_offset + 1;
 
-        Ok(())
+        Self {
+            mode_text,
+            cursor_text,
+            y,
+        }
     }
 }
 

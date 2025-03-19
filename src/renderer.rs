@@ -7,21 +7,16 @@ use crossterm::{
 };
 
 use crate::{
-    components::intersections::Intersections,
-    cursor::{cursor_pos, restore_position, save_position, set_position},
-    debug_panel::{DebugPanel, DEBUG_PANEL_HEIGHT},
-    draw::{Color, Draw, DrawOverlay, DrawSticky, OverlayPoint, Point},
+    cursor::{restore_position, save_position, set_position},
+    debug_panel::DebugPanel,
+    draw::{Color, DrawOverlay, OverlayPoint, Point},
     grid_background::GridBackground,
-    mode::{Anchor, Mode, Selection},
-    rectangle::Drag,
-    state::State,
-    status_bar::StatusBar,
+    mode::Selection,
 };
 
 pub struct Renderer {
     state: Vec<Vec<StatePoint>>,
     prev_state: Vec<Vec<StatePoint>>,
-    status_bar: StatusBar,
     grid_background: GridBackground,
     debug_panel: DebugPanel,
     width: u16,
@@ -41,7 +36,6 @@ impl Renderer {
         Self {
             state: vec![],
             prev_state: vec![],
-            status_bar: Default::default(),
             grid_background: GridBackground::new(),
             debug_panel: Default::default(),
             width,
@@ -76,47 +70,17 @@ impl Renderer {
         ctx.set_contents(content.iter().collect()).unwrap();
     }
 
-    pub fn render_frame(&mut self, state: &mut State) -> std::io::Result<()> {
-        self.status_bar.update(&state.mode, {
-            if state.debug_enabled {
-                DEBUG_PANEL_HEIGHT as u16
-            } else {
-                0
-            }
-        })?;
+    pub fn render_frame<F>(&mut self, cb: F) -> std::io::Result<()>
+    where
+        F: Fn() -> std::io::Result<()>,
+    {
         self.start_frame();
-        self.render(self.grid_background.draw()?)?;
-        self.render_sticky(self.status_bar.draw()?)?;
-        if state.debug_enabled {
-            self.render_sticky(self.debug_panel.draw()?)?;
-        }
-        self.render(state.draw()?)?;
-        match &mut state.mode {
-            Mode::Normal => {}
-            Mode::DrawRectangle(rect, anchor) => {
-                rect.drag_corner(anchor)?;
-                self.render(rect.draw()?)?;
-            }
-            Mode::Text(rect) => {
-                self.render(rect.draw()?)?;
-            }
-            Mode::DrawArrow(arrow) => {
-                arrow.update(cursor_pos());
-                self.render(arrow.draw()?)?;
-            }
-            Mode::Select(selection) => {
-                selection.drag_corner(&mut Anchor::BottomRight)?;
-                self.render_overlay(selection)?;
-            }
-        }
-        self.render(Intersections::new(state).draw()?)?;
-        self.render_overlay(state)?;
+        cb()?;
         self.finish_frame()?;
         if self.is_first_frame {
             self.is_first_frame = false;
         }
         stdout().flush()?;
-
         Ok(())
     }
 
