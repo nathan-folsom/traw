@@ -7,16 +7,13 @@ use crossterm::{
 };
 
 use crate::{
-    characters::{INTERSECTION_DOWN, INTERSECTION_LEFT, INTERSECTION_RIGHT, INTERSECTION_UP},
+    components::intersections::Intersections,
     cursor::{cursor_pos, restore_position, save_position, set_position},
     debug_panel::{DebugPanel, DEBUG_PANEL_HEIGHT},
-    draw::{
-        Color, CursorIntersect, Draw, DrawOverlay, DrawSticky, Intersection, OverlayPoint, Point,
-    },
+    draw::{Color, Draw, DrawOverlay, DrawSticky, OverlayPoint, Point},
     grid_background::GridBackground,
     mode::{Anchor, Mode, Selection},
     rectangle::Drag,
-    shape::Shape,
     state::State,
     status_bar::StatusBar,
 };
@@ -112,7 +109,7 @@ impl Renderer {
                 self.render_overlay(selection)?;
             }
         }
-        self.render_intersections(state)?;
+        self.render(Intersections::new(state).draw()?)?;
         self.render_overlay(state)?;
         self.finish_frame()?;
         if self.is_first_frame {
@@ -173,67 +170,6 @@ impl Renderer {
         };
 
         Ok(())
-    }
-
-    fn render_intersections(&mut self, state: &State) -> std::io::Result<()> {
-        let mut all_arrows = vec![];
-        let mut all_rectangles = vec![];
-        state.shapes.iter().for_each(|s| match s {
-            Shape::Rectangle(r) => all_rectangles.push(r),
-            Shape::Arrow(a) => all_arrows.push(a),
-        });
-        match &state.mode {
-            Mode::DrawRectangle(rect, _) => {
-                all_rectangles.push(rect);
-            }
-            Mode::Text(rect) => {
-                all_rectangles.push(rect);
-            }
-            Mode::DrawArrow(arrow) => {
-                all_arrows.push(arrow);
-            }
-            _ => {}
-        }
-        let mut intersection_points = vec![];
-        let mut add_intersection_point =
-            |point: Option<&(i32, i32)>, reference: Option<&(i32, i32)>| {
-                if let Some((x, y)) = point {
-                    all_rectangles.iter().for_each(|r| {
-                        let intersection = r.get_intersection(x, y);
-                        if let Intersection::Edge(_) = intersection {
-                            if let Some((x_1, y_1)) = reference {
-                                let character = {
-                                    if x_1 > x {
-                                        INTERSECTION_RIGHT
-                                    } else if x_1 < x {
-                                        INTERSECTION_LEFT
-                                    } else if y_1 < y {
-                                        INTERSECTION_UP
-                                    } else if y_1 > y {
-                                        INTERSECTION_DOWN
-                                    } else {
-                                        unreachable!("Reference point should always be different than endpoint")
-                                    }
-                                };
-                                intersection_points.push(Point {
-                                    x: *x,
-                                    y: *y,
-                                    character,
-                                    foreground: Color::Border,
-                                    background: Color::BorderBackground,
-                                });
-                            }
-                        }
-                    })
-                }
-            };
-        all_arrows.iter().for_each(|a| {
-            add_intersection_point(a.points.first(), a.points.get(1));
-            if a.points.len() > 1 {
-                add_intersection_point(a.points.last(), a.points.get(a.points.len() - 2));
-            }
-        });
-        self.render(intersection_points)
     }
 
     pub fn render_overlay(&mut self, overlay: &impl DrawOverlay) -> std::io::Result<()> {

@@ -14,6 +14,7 @@ use state::State;
 
 mod arrow;
 mod characters;
+mod components;
 mod cursor;
 mod cursor_guide;
 mod debug_panel;
@@ -95,7 +96,7 @@ fn main() -> std::io::Result<()> {
         renderer.render_frame(&mut state)?;
     }
 
-    end()?;
+    cleanup()?;
 
     Ok(())
 }
@@ -113,7 +114,7 @@ fn init() -> std::io::Result<()> {
     Ok(())
 }
 
-fn end() -> std::io::Result<()> {
+fn cleanup() -> std::io::Result<()> {
     execute!(stdout(), terminal::LeaveAlternateScreen)?;
     disable_raw_mode()?;
 
