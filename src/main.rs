@@ -1,6 +1,11 @@
 use std::io::stdout;
 
-use components::{intersections::Intersections, status_bar::StatusBar};
+use components::{
+    debug_panel::{DebugPanel, DEBUG_PANEL_HEIGHT},
+    grid_background::GridBackground,
+    intersections::Intersections,
+    status_bar::StatusBar,
+};
 use crossterm::{
     event::{self, KeyCode, KeyModifiers},
     execute,
@@ -8,7 +13,6 @@ use crossterm::{
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
 use cursor::cursor_pos;
-use debug_panel::DEBUG_PANEL_HEIGHT;
 use draw::{Draw, DrawSticky};
 use mode::{Anchor, Mode};
 use motion_state::MotionState;
@@ -22,9 +26,7 @@ mod characters;
 mod components;
 mod cursor;
 mod cursor_guide;
-mod debug_panel;
 mod draw;
-mod grid_background;
 mod mode;
 mod motion_state;
 mod mutate;
@@ -39,7 +41,7 @@ fn main() -> std::io::Result<()> {
     let mut state = State::init();
     let mut motion_state = MotionState::new();
     let (width, height) = terminal::size()?;
-    let renderer = Renderer::new(width, height);
+    let mut renderer = Renderer::new(width, height);
     let path_arg = std::env::args().nth(1);
 
     let mut file_name = "unnamed.traw".to_string();
@@ -49,7 +51,7 @@ fn main() -> std::io::Result<()> {
         state = load(&file_name)?;
     }
 
-    render(&renderer, &state);
+    render(&mut renderer, &mut state)?;
 
     loop {
         if let event::Event::Key(key_event) = event::read()? {
@@ -97,7 +99,7 @@ fn main() -> std::io::Result<()> {
             }
         }
 
-        render(&renderer, &state);
+        render(&mut renderer, &mut state)?;
     }
 
     cleanup()?;
@@ -125,10 +127,10 @@ fn cleanup() -> std::io::Result<()> {
     Ok(())
 }
 
-fn render(renderer: &Renderer, state: &State) {
-    renderer.render_frame(|| {
-        renderer.render(self.grid_background.draw()?)?;
-        renderer.render_sticky(
+fn render(renderer: &mut Renderer, state: &mut State) -> std::io::Result<()> {
+    renderer.render_frame(|r| {
+        r.render(GridBackground::new().draw()?)?;
+        r.render_sticky(
             StatusBar::new(&state.mode, {
                 if state.debug_enabled {
                     DEBUG_PANEL_HEIGHT as u16
@@ -139,29 +141,29 @@ fn render(renderer: &Renderer, state: &State) {
             .draw()?,
         )?;
         if state.debug_enabled {
-            renderer.render_sticky(self.debug_panel.draw()?)?;
+            r.render_sticky(DebugPanel {}.draw()?)?;
         }
-        renderer.render(state.draw()?)?;
+        r.render(state.draw()?)?;
         match &mut state.mode {
             Mode::Normal => {}
             Mode::DrawRectangle(rect, anchor) => {
                 rect.drag_corner(anchor)?;
-                renderer.render(rect.draw()?)?;
+                r.render(rect.draw()?)?;
             }
             Mode::Text(rect) => {
-                renderer.render(rect.draw()?)?;
+                r.render(rect.draw()?)?;
             }
             Mode::DrawArrow(arrow) => {
                 arrow.update(cursor_pos());
-                renderer.render(arrow.draw()?)?;
+                r.render(arrow.draw()?)?;
             }
             Mode::Select(selection) => {
                 selection.drag_corner(&mut Anchor::BottomRight)?;
-                renderer.render_overlay(selection)?;
+                r.render_overlay(selection)?;
             }
         }
-        renderer.render(Intersections::new(state).draw()?)?;
-        renderer.render_overlay(state)?;
+        r.render(Intersections::new(state).draw()?)?;
+        r.render_overlay(state)?;
         Ok(())
-    });
+    })
 }

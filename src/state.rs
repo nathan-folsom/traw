@@ -8,9 +8,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     arrow::Arrow,
+    components::debug_panel::debug,
     cursor::{cursor_pos, set_position},
     cursor_guide::CursorGuide,
-    debug_panel::debug,
     draw::{
         Color, CursorIntersect, Draw, DrawOverlay,
         EdgeIntersection::{Corner, Side},

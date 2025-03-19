@@ -8,17 +8,13 @@ use crossterm::{
 
 use crate::{
     cursor::{restore_position, save_position, set_position},
-    debug_panel::DebugPanel,
     draw::{Color, DrawOverlay, OverlayPoint, Point},
-    grid_background::GridBackground,
     mode::Selection,
 };
 
 pub struct Renderer {
     state: Vec<Vec<StatePoint>>,
     prev_state: Vec<Vec<StatePoint>>,
-    grid_background: GridBackground,
-    debug_panel: DebugPanel,
     width: u16,
     height: u16,
     is_first_frame: bool,
@@ -36,8 +32,6 @@ impl Renderer {
         Self {
             state: vec![],
             prev_state: vec![],
-            grid_background: GridBackground::new(),
-            debug_panel: Default::default(),
             width,
             height,
             is_first_frame: true,
@@ -70,12 +64,12 @@ impl Renderer {
         ctx.set_contents(content.iter().collect()).unwrap();
     }
 
-    pub fn render_frame<F>(&mut self, cb: F) -> std::io::Result<()>
+    pub fn render_frame<F>(&mut self, mut cb: F) -> std::io::Result<()>
     where
-        F: Fn() -> std::io::Result<()>,
+        F: FnMut(&mut Self) -> std::io::Result<()>,
     {
         self.start_frame();
-        cb()?;
+        cb(self)?;
         self.finish_frame()?;
         if self.is_first_frame {
             self.is_first_frame = false;
