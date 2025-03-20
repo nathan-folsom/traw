@@ -1,10 +1,9 @@
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    arrow::Arrow,
+    components::{arrow::Arrow, rectangle::Rectangle},
     cursor_guide::GuidePoint,
     draw::{CursorIntersect, Draw, Point},
-    rectangle::Rectangle,
 };
 
 #[derive(Serialize, Deserialize)]

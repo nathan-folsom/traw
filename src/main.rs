@@ -4,6 +4,7 @@ use components::{
     debug_panel::{DebugPanel, DEBUG_PANEL_HEIGHT},
     grid_background::GridBackground,
     intersections::Intersections,
+    rectangle::Drag,
     status_bar::StatusBar,
 };
 use crossterm::{
@@ -17,11 +18,9 @@ use draw::{Draw, DrawSticky};
 use mode::{Anchor, Mode};
 use motion_state::MotionState;
 use persistence::{load, save};
-use rectangle::Drag;
 use renderer::Renderer;
 use state::State;
 
-mod arrow;
 mod characters;
 mod components;
 mod cursor;
@@ -31,7 +30,6 @@ mod mode;
 mod motion_state;
 mod mutate;
 mod persistence;
-mod rectangle;
 mod renderer;
 mod shape;
 mod state;

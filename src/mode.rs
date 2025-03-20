@@ -3,9 +3,11 @@ use std::io::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    arrow::Arrow,
+    components::{
+        arrow::Arrow,
+        rectangle::{Drag, Rectangle},
+    },
     draw::{Color, DrawOverlay, OverlayPoint},
-    rectangle::{Drag, Rectangle},
 };
 
 #[derive(Serialize, Deserialize, Debug, Default)]

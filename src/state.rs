@@ -7,8 +7,7 @@ use crossterm::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    arrow::Arrow,
-    components::debug_panel::debug,
+    components::{arrow::Arrow, debug_panel::debug, rectangle::Rectangle},
     cursor::{cursor_pos, set_position},
     cursor_guide::CursorGuide,
     draw::{
@@ -18,7 +17,6 @@ use crate::{
     },
     mode::{Anchor, Mode, Selection},
     mutate::Mutate,
-    rectangle::Rectangle,
     shape::Shape,
 };
 
