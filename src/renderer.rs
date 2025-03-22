@@ -13,18 +13,19 @@ use crate::{
 };
 
 pub struct Renderer {
-    state: Vec<Vec<StatePoint>>,
+    pub state: Vec<Vec<StatePoint>>,
     prev_state: Vec<Vec<StatePoint>>,
     width: u16,
     height: u16,
     is_first_frame: bool,
 }
 
-#[derive(PartialEq, Clone)]
-struct StatePoint {
+#[derive(PartialEq, Clone, Debug)]
+pub struct StatePoint {
     character: char,
     foreground: Color,
     background: Color,
+    pub shape_id: Option<u32>,
 }
 
 impl Renderer {
@@ -49,6 +50,7 @@ impl Renderer {
                     character,
                     foreground,
                     background,
+                    shape_id: _,
                 } = self.state[x as usize][y as usize];
                 let is_background = matches!(foreground, Color::Grid)
                     && matches!(background, Color::EmptyBackground);
@@ -87,6 +89,7 @@ impl Renderer {
                     character: ' ',
                     foreground: Color::Empty,
                     background: Color::EmptyBackground,
+                    shape_id: None,
                 });
             }
             empty.push(cols.clone());
@@ -99,21 +102,25 @@ impl Renderer {
         self.state = empty;
     }
 
-    pub fn render(&mut self, points: Vec<Point<i32>>) -> std::io::Result<()> {
+    pub fn render(
+        &mut self,
+        points: Vec<Point<i32>>,
+        shape_id: Option<u32>,
+    ) -> std::io::Result<()> {
         for point in points {
-            self.draw_at(point)?;
+            self.draw_at(point, shape_id)?;
         }
         Ok(())
     }
 
     pub fn render_sticky(&mut self, points: Vec<Point<u16>>) -> std::io::Result<()> {
         for point in points {
-            self.draw_at(point.into())?;
+            self.draw_at(point.into(), None)?;
         }
         Ok(())
     }
 
-    fn draw_at(&mut self, point: Point<i32>) -> std::io::Result<()> {
+    fn draw_at(&mut self, point: Point<i32>, shape_id: Option<u32>) -> std::io::Result<()> {
         let Point {
             x,
             y,
@@ -125,6 +132,7 @@ impl Renderer {
             character,
             foreground,
             background,
+            shape_id,
         };
 
         Ok(())
@@ -155,7 +163,7 @@ impl Renderer {
                     .map(|(y, point)| {
                         let prev = &self.prev_state[x][y];
                         if point != prev || self.is_first_frame {
-                            set_position(x as u16, y as u16);
+                            set_position((x as u16, y as u16).into());
                             queue!(
                                 stdout(),
                                 SetForegroundColor(point.foreground.into()),

@@ -6,6 +6,8 @@ use std::{
 
 use crossterm::{cursor, queue};
 
+use crate::util::Vec2;
+
 /// Ideally crossterm would keep track of the cursor position for us, but it seems
 /// like there are some unfortunate performance side effects if we try and call
 /// crossterm::cursor::position, possibly because crossterm is flushing buffered commands every time
@@ -17,76 +19,67 @@ use crossterm::{cursor, queue};
 static CURSOR: OnceLock<RwLock<Cursor>> = OnceLock::new();
 
 struct Cursor {
-    x: u16,
-    y: u16,
-    saved_position: Option<(u16, u16)>,
+    position: Vec2<u16>,
+    saved_position: Option<Vec2<u16>>,
 }
 
-impl Cursor {
-    fn position(&self) -> (u16, u16) {
-        (self.x, self.y)
-    }
+pub fn cursor_position() -> Vec2<u16> {
+    CURSOR.get_or_init(init).read().unwrap().position.clone()
 }
 
-pub fn cursor_pos() -> (u16, u16) {
-    CURSOR.get_or_init(init).read().unwrap().position()
-}
-
-pub fn adjust_position(x: i16, y: i16) {
+pub fn adjust_position(Vec2 { x, y }: Vec2<i16>) {
     let mut cursor = CURSOR.get().unwrap().write().unwrap();
     match x.cmp(&0) {
         Ordering::Less => {
             let _ = queue!(stdout(), cursor::MoveLeft(x.unsigned_abs()));
-            cursor.x -= x.unsigned_abs();
+            cursor.position.x -= x.unsigned_abs();
         }
         Ordering::Greater => {
             let _ = queue!(stdout(), cursor::MoveRight(x as u16));
-            cursor.x += x as u16;
+            cursor.position.x += x as u16;
         }
         _ => {}
     }
     match y.cmp(&0) {
         Ordering::Less => {
             let _ = queue!(stdout(), cursor::MoveLeft(y.unsigned_abs()));
-            cursor.y -= y.unsigned_abs();
+            cursor.position.y -= y.unsigned_abs();
         }
         Ordering::Greater => {
             let _ = queue!(stdout(), cursor::MoveRight(y as u16));
-            cursor.y += y as u16;
+            cursor.position.y += y as u16;
         }
         _ => {}
     }
 }
 
-pub fn set_position(x: u16, y: u16) {
+pub fn set_position(Vec2 { x, y }: Vec2<u16>) {
     let _ = queue!(stdout(), cursor::MoveTo(x, y));
     let mut cursor = CURSOR.get_or_init(init).write().unwrap();
-    cursor.x = x;
-    cursor.y = y;
+    cursor.position.x = x;
+    cursor.position.y = y;
 }
 
 pub fn save_position() {
     let _ = queue!(stdout(), cursor::SavePosition);
     let mut cursor = CURSOR.get_or_init(init).write().unwrap();
-    cursor.saved_position = Some(cursor.position());
+    cursor.saved_position = Some(cursor.position.clone());
 }
 
 pub fn restore_position() {
     let _ = queue!(stdout(), cursor::RestorePosition);
-    let (x, y) = {
+    let position = {
         let mut cursor = CURSOR.get_or_init(init).write().unwrap();
-        let saved = cursor.saved_position.unwrap();
-        cursor.saved_position = None;
-        saved
+        let saved = cursor.saved_position.take();
+        saved.unwrap()
     };
-    set_position(x, y)
+    set_position(position)
 }
 
 fn init() -> RwLock<Cursor> {
-    let (x, y) = cursor::position().expect("Failed to init cursor position");
+    let position = cursor::position().expect("Failed to init cursor position");
     RwLock::new(Cursor {
-        x,
-        y,
+        position: position.into(),
         saved_position: None,
     })
 }

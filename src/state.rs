@@ -8,12 +8,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     components::{arrow::Arrow, debug_panel::debug, rectangle::Rectangle},
-    cursor::{cursor_pos, set_position},
-    cursor_guide::CursorGuide,
+    cursor::{cursor_position, set_position},
     draw::{
         Color, CursorIntersect, Draw, DrawOverlay,
         EdgeIntersection::{Corner, Side},
-        Intersection, OverlayPoint, Point,
+        Intersection, OverlayPoint,
     },
     mode::{Anchor, Mode, Selection},
     mutate::Mutate,
@@ -42,13 +41,13 @@ impl State {
 
     pub fn handle_insert(&mut self) -> std::io::Result<()> {
         if let Mode::Normal = &self.mode {
-            let (x, y) = cursor_pos();
+            let position = cursor_position();
             let (intersection, i) = self.get_cursor_intersection()?;
 
             match intersection {
                 Intersection::None => {
                     self.enter_mode(Mode::DrawRectangle(
-                        Rectangle::new_at(x as i32, y as i32),
+                        Rectangle::new_at(position.x as i32, position.y as i32),
                         Anchor::BottomRight,
                     ));
                 }
@@ -87,10 +86,10 @@ impl State {
     }
 
     pub fn handle_select(&mut self) -> std::io::Result<()> {
-        let (cursor_x, cursor_y) = cursor_pos();
+        let position = cursor_position();
         self.enter_mode(Mode::Select(Selection {
-            x: cursor_x as i32,
-            y: cursor_y as i32,
+            x: position.x as i32,
+            y: position.y as i32,
             width: 1,
             height: 1,
         }));
@@ -133,7 +132,7 @@ impl State {
         queue!(stdout(), cursor::SetCursorStyle::SteadyBar)?;
         let (next_x, next_y) = rect.get_inner_cursor_position();
         self.enter_mode(Mode::Text(rect));
-        set_position(next_x as u16, next_y as u16);
+        set_position((next_x as u16, next_y as u16).into());
 
         Ok(())
     }
@@ -192,16 +191,6 @@ impl State {
             let undo = self.mutate(redo);
             self.undo_stack.push(undo);
         }
-    }
-}
-
-impl Draw for State {
-    fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
-        let mut points = vec![CursorGuide::new(&self.shapes).draw()?];
-        for shape in &self.shapes {
-            points.push(shape.draw()?);
-        }
-        Ok(points.into_iter().flatten().collect())
     }
 }
 

@@ -4,20 +4,17 @@ use crate::draw::{DrawSticky, Point};
 
 pub const DEBUG_PANEL_HEIGHT: usize = 20;
 
-use std::{sync::OnceLock, time::Instant};
-static mut DEBUG: OnceLock<Vec<String>> = OnceLock::new();
+use std::{
+    sync::{OnceLock, RwLock},
+    time::Instant,
+};
+static DEBUG: OnceLock<RwLock<Vec<String>>> = OnceLock::new();
 
 #[derive(Default)]
 pub struct DebugPanel {}
 
 pub fn debug(message: String) {
-    unsafe {
-        let _ = DEBUG.set(vec![]);
-        DEBUG
-            .get_mut()
-            .expect("DEBUG messages uninitialized")
-            .push(message);
-    }
+    DEBUG.get_or_init(init).write().unwrap().push(message);
 }
 
 #[allow(dead_code)] // Util that is often used between commits
@@ -32,7 +29,7 @@ impl DrawSticky for DebugPanel {
         let (w, h) = terminal::size()?;
         let mut points = vec![];
 
-        let messages = unsafe { DEBUG.get_or_init(Vec::new) };
+        let messages = DEBUG.get_or_init(init).read().unwrap();
         for y in 0..DEBUG_PANEL_HEIGHT {
             let message_idx = messages.len().checked_sub(DEBUG_PANEL_HEIGHT - y);
             let message = match message_idx {
@@ -59,4 +56,8 @@ impl DrawSticky for DebugPanel {
 
         Ok(points)
     }
+}
+
+fn init() -> RwLock<Vec<String>> {
+    RwLock::new(vec![])
 }

@@ -6,10 +6,11 @@ use crate::{
         CORNER_1_ROUNDED, CORNER_2_ROUNDED, CORNER_3_ROUNDED, CORNER_4_ROUNDED, HORIZONTAL_BAR,
         VERTICAL_BAR,
     },
-    cursor::{cursor_pos, set_position},
+    cursor::{cursor_position, set_position},
     cursor_guide::GuidePoint,
     draw::{Color, CursorIntersect, Draw, EdgeIntersection::Corner, Intersection, Point},
     mode::Anchor,
+    shape_id::generate_shape_id,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -19,6 +20,7 @@ pub struct Rectangle {
     pub width: i32,
     pub height: i32,
     pub text: Vec<char>,
+    pub shape_id: u32,
 }
 
 impl Rectangle {
@@ -29,20 +31,21 @@ impl Rectangle {
             width: 1,
             height: 1,
             text: vec![],
+            shape_id: generate_shape_id(),
         }
     }
 
     pub fn on_char(&mut self, key: char) -> std::io::Result<()> {
         self.text.push(key);
         let (next_x, next_y) = self.get_inner_cursor_position();
-        set_position(next_x as u16, next_y as u16);
+        set_position((next_x as u16, next_y as u16).into());
         Ok(())
     }
 
     pub fn on_backspace(&mut self) -> std::io::Result<()> {
         self.text.pop();
         let (next_x, next_y) = self.get_inner_cursor_position();
-        set_position(next_x as u16, next_y as u16);
+        set_position((next_x as u16, next_y as u16).into());
         Ok(())
     }
 
@@ -161,9 +164,9 @@ pub trait Drag {
     fn rect(&mut self) -> (&mut i32, &mut i32, &mut i32, &mut i32);
 
     fn drag_corner(&mut self, anchor: &mut Anchor) -> std::io::Result<()> {
-        let (c_x, c_y) = cursor_pos();
-        let cursor_x = c_x as i32;
-        let cursor_y = c_y as i32;
+        let position = cursor_position();
+        let cursor_x = position.x as i32;
+        let cursor_y = position.y as i32;
         self.adjust_anchor(anchor, &cursor_x, &cursor_y);
         match anchor {
             Anchor::TopLeft => {
@@ -278,6 +281,7 @@ mod test {
             width: 4,
             height: 4,
             text: vec!['0', '1', '2'],
+            shape_id: 1,
         };
         let pos = rect.get_inner_cursor_position();
         let expected = (7, 7);

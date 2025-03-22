@@ -12,25 +12,29 @@ use crate::{
     },
     cursor_guide::GuidePoint,
     draw::{Color, CursorIntersect, Draw, EdgeIntersection, Intersection, Point},
+    shape_id::generate_shape_id,
+    util::Vec2,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Arrow {
     pub points: Vec<(i32, i32)>,
+    pub shape_id: u32,
 }
 
 impl Arrow {
     pub fn init() -> Self {
-        Self { points: vec![] }
+        Self {
+            points: vec![],
+            shape_id: generate_shape_id(),
+        }
     }
 
-    pub fn update(&mut self, (cursor_x, cursor_y): (u16, u16)) {
-        if self.points.len() > 1
-            && self.points[self.points.len() - 2] == (cursor_x as i32, cursor_y as i32)
-        {
+    pub fn update(&mut self, Vec2 { x, y }: Vec2<u16>) {
+        if self.points.len() > 1 && self.points[self.points.len() - 2] == (x as i32, y as i32) {
             self.points.pop();
         } else {
-            self.points.push((cursor_x as i32, cursor_y as i32));
+            self.points.push((x as i32, y as i32));
         }
     }
 
@@ -248,7 +252,7 @@ mod test {
     fn should_remove_point_when_revisiting_previous_point() {
         let mut arrow = Arrow::init();
         arrow.points = vec![(0, 0), (1, 0), (2, 0)];
-        arrow.update((1, 0));
+        arrow.update((1, 0).into());
         let expected = vec![(0, 0), (1, 0)];
         assert_eq!(arrow.points, expected);
     }

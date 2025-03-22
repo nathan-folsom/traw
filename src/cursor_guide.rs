@@ -1,6 +1,6 @@
 use crate::{
     characters::{HORIZONTAL_BAR, VERTICAL_BAR},
-    cursor::cursor_pos,
+    cursor::cursor_position,
     draw::{Color, Draw, Point},
 };
 
@@ -31,9 +31,9 @@ impl CursorGuide {
 
 impl Draw for CursorGuide {
     fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
-        let (cursor_x, cursor_y) = cursor_pos();
-        let c_x = cursor_x as i32;
-        let c_y = cursor_y as i32;
+        let position = cursor_position();
+        let c_x = position.x as i32;
+        let c_y = position.y as i32;
         let mut points = vec![];
         self.points.iter().for_each(|(_x, _y)| {
             let x = *_x;

@@ -13,12 +13,14 @@ use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{self, disable_raw_mode, enable_raw_mode},
 };
-use cursor::cursor_pos;
+use cursor::{cursor_position, set_position};
+use cursor_guide::CursorGuide;
 use draw::{Draw, DrawSticky};
 use mode::{Anchor, Mode};
 use motion_state::MotionState;
 use persistence::{load, save};
 use renderer::Renderer;
+use shape::Shape;
 use state::State;
 
 mod characters;
@@ -32,7 +34,9 @@ mod mutate;
 mod persistence;
 mod renderer;
 mod shape;
+mod shape_id;
 mod state;
+mod util;
 
 fn main() -> std::io::Result<()> {
     init()?;
@@ -48,6 +52,8 @@ fn main() -> std::io::Result<()> {
         file_name = path;
         state = load(&file_name)?;
     }
+
+    set_position((5, 2).into());
 
     render(&mut renderer, &mut state)?;
 
@@ -73,16 +79,16 @@ fn main() -> std::io::Result<()> {
                         'v' => state.handle_select()?,
                         'd' => state.debug_enabled = !state.debug_enabled,
                         'u' => state.undo(),
-                        _ => motion_state.handle_motions(key)?,
+                        _ => motion_state.handle_motions(key, &renderer)?,
                     },
                     Mode::Select(selection) => {
                         if key == 'y' {
                             renderer.handle_yank(selection);
                         }
-                        motion_state.handle_motions(key)?;
+                        motion_state.handle_motions(key, &renderer)?;
                     }
                     _ => {
-                        motion_state.handle_motions(key)?;
+                        motion_state.handle_motions(key, &renderer)?;
                     }
                 },
 
@@ -127,7 +133,7 @@ fn cleanup() -> std::io::Result<()> {
 
 fn render(renderer: &mut Renderer, state: &mut State) -> std::io::Result<()> {
     renderer.render_frame(|r| {
-        r.render(GridBackground::new().draw()?)?;
+        r.render(GridBackground::new().draw()?, None)?;
         r.render_sticky(
             StatusBar::new(&state.mode, {
                 if state.debug_enabled {
@@ -141,26 +147,35 @@ fn render(renderer: &mut Renderer, state: &mut State) -> std::io::Result<()> {
         if state.debug_enabled {
             r.render_sticky(DebugPanel {}.draw()?)?;
         }
-        r.render(state.draw()?)?;
+        r.render(CursorGuide::new(&state.shapes).draw()?, None)?;
+        for shape in &state.shapes {
+            r.render(
+                shape.draw()?,
+                match shape {
+                    Shape::Arrow(a) => Some(a.shape_id),
+                    Shape::Rectangle(r) => Some(r.shape_id),
+                },
+            )?;
+        }
         match &mut state.mode {
             Mode::Normal => {}
             Mode::DrawRectangle(rect, anchor) => {
                 rect.drag_corner(anchor)?;
-                r.render(rect.draw()?)?;
+                r.render(rect.draw()?, Some(rect.shape_id))?;
             }
             Mode::Text(rect) => {
-                r.render(rect.draw()?)?;
+                r.render(rect.draw()?, Some(rect.shape_id))?;
             }
             Mode::DrawArrow(arrow) => {
-                arrow.update(cursor_pos());
-                r.render(arrow.draw()?)?;
+                arrow.update(cursor_position());
+                r.render(arrow.draw()?, Some(arrow.shape_id))?;
             }
             Mode::Select(selection) => {
                 selection.drag_corner(&mut Anchor::BottomRight)?;
                 r.render_overlay(selection)?;
             }
         }
-        r.render(Intersections::new(state).draw()?)?;
+        r.render(Intersections::new(state).draw()?, None)?;
         r.render_overlay(state)?;
         Ok(())
     })

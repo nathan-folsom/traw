@@ -1,7 +1,7 @@
 use crossterm::terminal;
 
 use crate::{
-    cursor::cursor_pos,
+    cursor::cursor_position,
     draw::{DrawSticky, Point},
     mode::Mode,
 };
@@ -29,8 +29,8 @@ impl StatusBar {
             Mode::Select(_) => SELECT,
         };
 
-        let (c_x, c_y) = cursor_pos();
-        let cursor_text = format!("{}:{}", c_x, c_y);
+        let position = cursor_position();
+        let cursor_text = format!("{}:{}", position.x, position.y);
         let y = y_offset + 1;
 
         Self {

@@ -1,6 +1,6 @@
 use std::io::Result;
 
-use crate::{cursor::cursor_pos, mode::Anchor};
+use crate::{cursor::cursor_position, mode::Anchor};
 
 /// Used for rendering an object at a specific location on the canvas
 pub trait Draw {
@@ -21,8 +21,8 @@ pub trait DrawOverlay {
 pub trait CursorIntersect {
     fn get_intersection(&self, x: &i32, y: &i32) -> Intersection;
     fn get_cursor_intersection(&self) -> std::io::Result<Intersection> {
-        let (cursor_x, cursor_y) = cursor_pos();
-        Ok(self.get_intersection(&(cursor_x as i32), &(cursor_y as i32)))
+        let position = cursor_position();
+        Ok(self.get_intersection(&(position.x as i32), &(position.y as i32)))
     }
     fn hovered(&self) -> std::io::Result<bool> {
         Ok(!matches!(
