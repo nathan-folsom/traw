@@ -28,6 +28,15 @@ impl From<Vec2<u16>> for Vec2<i32> {
     }
 }
 
+impl From<Vec2<i32>> for Vec2<u16> {
+    fn from(value: Vec2<i32>) -> Self {
+        Vec2 {
+            x: value.x as u16,
+            y: value.y as u16,
+        }
+    }
+}
+
 impl From<(i32, i32)> for Vec2<u16> {
     fn from((x, y): (i32, i32)) -> Self {
         Vec2 {

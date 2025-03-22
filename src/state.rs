@@ -17,6 +17,7 @@ use crate::{
     mode::{Anchor, Mode, Selection},
     mutate::Mutate,
     shape::Shape,
+    util::Vec2,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -41,13 +42,13 @@ impl State {
 
     pub fn handle_insert(&mut self) -> std::io::Result<()> {
         if let Mode::Normal = &self.mode {
-            let position = cursor_position();
+            let position: Vec2<i32> = cursor_position().into();
             let (intersection, i) = self.get_cursor_intersection()?;
 
             match intersection {
                 Intersection::None => {
                     self.enter_mode(Mode::DrawRectangle(
-                        Rectangle::new_at(position.x as i32, position.y as i32),
+                        Rectangle::new_at(position.x, position.y),
                         Anchor::BottomRight,
                     ));
                 }
@@ -130,9 +131,9 @@ impl State {
 
     fn enter_text_mode(&mut self, rect: Rectangle) -> std::io::Result<()> {
         queue!(stdout(), cursor::SetCursorStyle::SteadyBar)?;
-        let (next_x, next_y) = rect.get_inner_cursor_position();
+        let next = rect.get_inner_cursor_position();
         self.enter_mode(Mode::Text(rect));
-        set_position((next_x as u16, next_y as u16).into());
+        set_position(next.into());
 
         Ok(())
     }

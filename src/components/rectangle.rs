@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::cmp::Ordering::{Greater, Less};
+use std::{
+    cmp::Ordering::{Greater, Less},
+    ops::{Deref, DerefMut},
+};
 
 use crate::{
     characters::{
@@ -16,19 +19,30 @@ use crate::{
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Rectangle {
-    pub x: i32,
-    pub y: i32,
+    pub origin: Vec2<i32>,
     pub width: i32,
     pub height: i32,
     pub text: Vec<char>,
     pub shape_id: u32,
 }
 
+impl Deref for Rectangle {
+    type Target = Vec2<i32>;
+    fn deref(&self) -> &Self::Target {
+        &self.origin
+    }
+}
+
+impl DerefMut for Rectangle {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.origin
+    }
+}
+
 impl Rectangle {
     pub fn new_at(x: i32, y: i32) -> Rectangle {
         Self {
-            x,
-            y,
+            origin: Vec2 { x, y },
             width: 1,
             height: 1,
             text: vec![],
@@ -38,28 +52,28 @@ impl Rectangle {
 
     pub fn on_char(&mut self, key: char) -> std::io::Result<()> {
         self.text.push(key);
-        let (next_x, next_y) = self.get_inner_cursor_position();
-        set_position((next_x as u16, next_y as u16).into());
+        let next = self.get_inner_cursor_position();
+        set_position(next.into());
         Ok(())
     }
 
     pub fn on_backspace(&mut self) -> std::io::Result<()> {
         self.text.pop();
-        let (next_x, next_y) = self.get_inner_cursor_position();
-        set_position((next_x as u16, next_y as u16).into());
+        let next = self.get_inner_cursor_position();
+        set_position(next.into());
         Ok(())
     }
 
-    pub fn get_inner_cursor_position(&self) -> (i32, i32) {
+    pub fn get_inner_cursor_position(&self) -> Vec2<i32> {
         if self.width < 3 || self.height < 3 {
-            return (self.x, self.y);
+            return Vec2::new(self.x, self.y);
         }
         let text_width = self.width - 2;
         let col = self.text.len() as i32 % text_width;
         let row = self.text.len() as i32 / text_width;
         let cursor_x = self.x + 1 + col;
         let cursor_y = self.y + 1 + row;
-        (cursor_x, cursor_y)
+        Vec2::new(cursor_x, cursor_y)
     }
 }
 
@@ -157,7 +171,12 @@ impl CursorIntersect for Rectangle {
 
 impl Drag for Rectangle {
     fn rect(&mut self) -> (&mut i32, &mut i32, &mut i32, &mut i32) {
-        (&mut self.x, &mut self.y, &mut self.width, &mut self.height)
+        (
+            &mut self.origin.x,
+            &mut self.origin.y,
+            &mut self.width,
+            &mut self.height,
+        )
     }
 }
 
@@ -272,13 +291,14 @@ impl GuidePoint for Rectangle {
 
 #[cfg(test)]
 mod test {
+    use crate::util::Vec2;
+
     use super::Rectangle;
 
     #[test]
     fn should_get_cursor_position_when_editing_text() {
         let rect = Rectangle {
-            x: 5,
-            y: 5,
+            origin: Vec2::new(5, 5),
             width: 4,
             height: 4,
             text: vec!['0', '1', '2'],
@@ -286,6 +306,6 @@ mod test {
         };
         let pos = rect.get_inner_cursor_position();
         let expected = (7, 7);
-        assert_eq!(pos, expected);
+        assert_eq!(pos, expected.into());
     }
 }
