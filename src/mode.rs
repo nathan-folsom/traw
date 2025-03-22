@@ -20,6 +20,15 @@ pub enum Mode {
     Text(Rectangle),
 }
 
+impl Mode {
+    pub fn is_normal(&self) -> bool {
+        match self {
+            Mode::Normal => true,
+            _ => false,
+        }
+    }
+}
+
 /// When resizing a rectangle, which corner is being dragged
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Anchor {

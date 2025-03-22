@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 use crate::{
     cursor::{adjust_position, cursor_position, set_position},
+    mode::Mode,
     renderer::Renderer,
     util::Vec2,
 };
@@ -15,7 +16,12 @@ impl MotionState {
         Self { count: vec![] }
     }
 
-    pub fn handle_motions(&mut self, key: char, renderer: &Renderer) -> std::io::Result<()> {
+    pub fn handle_motions(
+        &mut self,
+        key: char,
+        renderer: &Renderer,
+        mode: &Mode,
+    ) -> std::io::Result<()> {
         let move_count = self.get_count() as i16;
         match key {
             'h' => {
@@ -31,13 +37,19 @@ impl MotionState {
                 adjust_position((move_count, 0).into());
             }
             'w' => {
-                word_motion(renderer, get_next_word_start);
+                if mode.is_normal() {
+                    word_motion(renderer, get_next_word_start);
+                }
             }
             'b' => {
-                word_motion(renderer, get_previous_word_start);
+                if mode.is_normal() {
+                    word_motion(renderer, get_previous_word_start);
+                }
             }
             'e' => {
-                word_motion(renderer, get_next_word_end);
+                if mode.is_normal() {
+                    word_motion(renderer, get_next_word_end);
+                }
             }
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => self.count.push(key),
             _ => {}

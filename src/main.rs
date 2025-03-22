@@ -79,16 +79,16 @@ fn main() -> std::io::Result<()> {
                         'v' => state.handle_select()?,
                         'd' => state.debug_enabled = !state.debug_enabled,
                         'u' => state.undo(),
-                        _ => motion_state.handle_motions(key, &renderer)?,
+                        _ => motion_state.handle_motions(key, &renderer, &state.mode)?,
                     },
                     Mode::Select(selection) => {
                         if key == 'y' {
                             renderer.handle_yank(selection);
                         }
-                        motion_state.handle_motions(key, &renderer)?;
+                        motion_state.handle_motions(key, &renderer, &state.mode)?;
                     }
                     _ => {
-                        motion_state.handle_motions(key, &renderer)?;
+                        motion_state.handle_motions(key, &renderer, &state.mode)?;
                     }
                 },
 
