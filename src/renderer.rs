@@ -13,15 +13,15 @@ use crate::{
 };
 
 pub struct Renderer {
-    pub state: Vec<Vec<StatePoint>>,
-    prev_state: Vec<Vec<StatePoint>>,
+    pub state: Vec<Vec<Cell>>,
+    prev_state: Vec<Vec<Cell>>,
     width: u16,
     height: u16,
     is_first_frame: bool,
 }
 
 #[derive(PartialEq, Clone, Debug)]
-pub struct StatePoint {
+pub struct Cell {
     character: char,
     foreground: Color,
     background: Color,
@@ -46,7 +46,7 @@ impl Renderer {
             for col in 0..selection.width {
                 let x = col + selection.x;
                 let y = row + selection.y;
-                let StatePoint {
+                let Cell {
                     character,
                     foreground,
                     background,
@@ -85,7 +85,7 @@ impl Renderer {
         for _ in 0..self.width {
             let mut cols = vec![];
             for _ in 0..self.height {
-                cols.push(StatePoint {
+                cols.push(Cell {
                     character: ' ',
                     foreground: Color::Empty,
                     background: Color::EmptyBackground,
@@ -121,7 +121,7 @@ impl Renderer {
     }
 
     fn draw_at(&mut self, point: Point<i32>, shape_id: Option<u32>) -> std::io::Result<()> {
-        self.state[point.x as usize][point.y as usize] = StatePoint {
+        self.state[point.x as usize][point.y as usize] = Cell {
             character: point.character,
             foreground: point.foreground,
             background: point.background,
