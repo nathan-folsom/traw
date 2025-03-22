@@ -167,7 +167,7 @@ fn render(renderer: &mut Renderer, state: &mut State) -> std::io::Result<()> {
                 r.render(rect.draw()?, Some(rect.shape_id))?;
             }
             Mode::DrawArrow(arrow) => {
-                arrow.update(cursor_position());
+                arrow.update(cursor_position().into());
                 r.render(arrow.draw()?, Some(arrow.shape_id))?;
             }
             Mode::Select(selection) => {

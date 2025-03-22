@@ -4,6 +4,7 @@ use crate::{
     mode::Mode,
     shape::Shape,
     state::State,
+    util::Vec2,
 };
 
 pub struct Intersections {
@@ -32,28 +33,28 @@ impl Intersections {
         }
         let mut intersection_points = vec![];
         let mut add_intersection_point =
-            |point: Option<&(i32, i32)>, reference: Option<&(i32, i32)>| {
-                if let Some((x, y)) = point {
+            |point: Option<&Vec2<i32>>, reference: Option<&Vec2<i32>>| {
+                if let Some(p) = point {
                     all_rectangles.iter().for_each(|r| {
-                        let intersection = r.get_intersection(x, y);
+                        let intersection = r.get_intersection(p);
                         if let Intersection::Edge(_) = intersection {
-                            if let Some((x_1, y_1)) = reference {
+                            if let Some(r) = reference {
                                 let character = {
-                                    if x_1 > x {
+                                    if r.x > p.x {
                                         INTERSECTION_RIGHT
-                                    } else if x_1 < x {
+                                    } else if r.x < p.x {
                                         INTERSECTION_LEFT
-                                    } else if y_1 < y {
+                                    } else if r.y < p.y {
                                         INTERSECTION_UP
-                                    } else if y_1 > y {
+                                    } else if r.y > p.y {
                                         INTERSECTION_DOWN
                                     } else {
                                         unreachable!("Reference point should always be different than endpoint")
                                     }
                                 };
                                 intersection_points.push(Point {
-                                    x: *x,
-                                    y: *y,
+                                    x: p.x,
+                                    y: p.y,
                                     character,
                                     foreground: Color::Border,
                                     background: Color::BorderBackground,

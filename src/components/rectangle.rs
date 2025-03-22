@@ -11,6 +11,7 @@ use crate::{
     draw::{Color, CursorIntersect, Draw, EdgeIntersection::Corner, Intersection, Point},
     mode::Anchor,
     shape_id::generate_shape_id,
+    util::Vec2,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -112,7 +113,7 @@ impl Draw for Rectangle {
 }
 
 impl CursorIntersect for Rectangle {
-    fn get_intersection(&self, x: &i32, y: &i32) -> Intersection {
+    fn get_intersection(&self, Vec2 { x, y }: &Vec2<i32>) -> Intersection {
         let c_x = *x;
         let c_y = *y;
         let y_0 = self.y;
@@ -258,12 +259,12 @@ pub trait Drag {
 }
 
 impl GuidePoint for Rectangle {
-    fn get_intersection_points(&self) -> Vec<(i32, i32)> {
+    fn get_intersection_points(&self) -> Vec<Vec2<i32>> {
         [
-            (self.x, self.y),
-            (self.x + self.width - 1, self.y),
-            (self.x + self.width - 1, self.y + self.height - 1),
-            (self.x, self.y + self.height - 1),
+            (self.x, self.y).into(),
+            (self.x + self.width - 1, self.y).into(),
+            (self.x + self.width - 1, self.y + self.height - 1).into(),
+            (self.x, self.y + self.height - 1).into(),
         ]
         .into()
     }

@@ -18,7 +18,7 @@ use crate::{
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Arrow {
-    pub points: Vec<(i32, i32)>,
+    pub points: Vec<Vec2<i32>>,
     pub shape_id: u32,
 }
 
@@ -30,28 +30,28 @@ impl Arrow {
         }
     }
 
-    pub fn update(&mut self, Vec2 { x, y }: Vec2<u16>) {
-        if self.points.len() > 1 && self.points[self.points.len() - 2] == (x as i32, y as i32) {
+    pub fn update(&mut self, position: Vec2<i32>) {
+        if self.points.len() > 1 && self.points[self.points.len() - 2] == position {
             self.points.pop();
         } else {
-            self.points.push((x as i32, y as i32));
+            self.points.push(position);
         }
     }
 
     const FG: Color = Color::Border;
     const BG: Color = Color::BorderBackground;
 
-    fn get_endpoint(&self, point: &(i32, i32), neighbor: &(i32, i32)) -> Result<Point<i32>> {
+    fn get_endpoint(&self, point: &Vec2<i32>, neighbor: &Vec2<i32>) -> Result<Point<i32>> {
         self.get_point(
             point,
-            match point.1 != neighbor.1 && point.0 == neighbor.0 {
+            match point.y != neighbor.y && point.x == neighbor.x {
                 true => VERTICAL_BAR,
                 false => HORIZONTAL_BAR,
             },
         )
     }
 
-    fn get_point(&self, (x, y): &(i32, i32), c: char) -> Result<Point<i32>> {
+    fn get_point(&self, Vec2 { x, y }: &Vec2<i32>, c: char) -> Result<Point<i32>> {
         Ok(Point {
             x: *x,
             y: *y,
@@ -62,9 +62,9 @@ impl Arrow {
     }
 
     fn get_char(
-        prev: &(i32, i32),
-        current: &(i32, i32),
-        next: &(i32, i32),
+        prev: &Vec2<i32>,
+        current: &Vec2<i32>,
+        next: &Vec2<i32>,
         try_arrow: &mut bool,
     ) -> char {
         let mut get_arrow = |normal: char, arrow: char| match try_arrow {
@@ -75,8 +75,8 @@ impl Arrow {
             }
         };
         match (
-            (prev.0.cmp(&current.0), prev.1.cmp(&current.1)),
-            (current.0.cmp(&next.0), current.1.cmp(&next.1)),
+            (prev.x.cmp(&current.x), prev.y.cmp(&current.y)),
+            (current.x.cmp(&next.x), current.y.cmp(&next.y)),
         ) {
             ((Equal, Greater), (Equal, Greater)) => get_arrow(VERTICAL_BAR, ARROW_UP),
             ((Equal, Less), (Equal, Less)) => get_arrow(VERTICAL_BAR, ARROW_DOWN),
@@ -125,9 +125,9 @@ impl Draw for Arrow {
 }
 
 impl CursorIntersect for Arrow {
-    fn get_intersection(&self, x: &i32, y: &i32) -> crate::draw::Intersection {
-        for (x_1, y_1) in &self.points {
-            if x != x_1 || y != y_1 {
+    fn get_intersection(&self, p: &Vec2<i32>) -> crate::draw::Intersection {
+        for point in &self.points {
+            if point != p {
                 continue;
             }
             return Intersection::Edge(EdgeIntersection::Side);
@@ -137,7 +137,7 @@ impl CursorIntersect for Arrow {
 }
 
 impl GuidePoint for Arrow {
-    fn get_intersection_points(&self) -> Vec<(i32, i32)> {
+    fn get_intersection_points(&self) -> Vec<Vec2<i32>> {
         vec![self.points.first(), self.points.last()]
             .into_iter()
             .flatten()
@@ -148,7 +148,7 @@ impl GuidePoint for Arrow {
 
 #[cfg(test)]
 mod test {
-    use crate::characters::*;
+    use crate::{characters::*, util::Vec2};
 
     use super::Arrow;
 
@@ -156,7 +156,7 @@ mod test {
     fn should_get_horizontal_bar() {
         assert_eq!(
             HORIZONTAL_BAR,
-            Arrow::get_char(&(0, 0), &(1, 0), &(2, 0), &mut false)
+            Arrow::get_char(&(0, 0).into(), &(1, 0).into(), &(2, 0).into(), &mut false)
         );
     }
 
@@ -164,7 +164,7 @@ mod test {
     fn should_get_vertical_bar() {
         assert_eq!(
             VERTICAL_BAR,
-            Arrow::get_char(&(0, 0), &(0, 1), &(0, 2), &mut false)
+            Arrow::get_char(&(0, 0).into(), &(0, 1).into(), &(0, 2).into(), &mut false)
         );
     }
 
@@ -172,11 +172,11 @@ mod test {
     fn should_get_corner_1() {
         assert_eq!(
             CORNER_1,
-            Arrow::get_char(&(0, 1), &(1, 1), &(1, 0), &mut false)
+            Arrow::get_char(&(0, 1).into(), &(1, 1).into(), &(1, 0).into(), &mut false)
         );
         assert_eq!(
             CORNER_1,
-            Arrow::get_char(&(1, 0), &(1, 1), &(0, 1), &mut false)
+            Arrow::get_char(&(1, 0).into(), &(1, 1).into(), &(0, 1).into(), &mut false)
         );
     }
 
@@ -184,11 +184,11 @@ mod test {
     fn should_get_corner_2() {
         assert_eq!(
             CORNER_2,
-            Arrow::get_char(&(0, 0), &(0, 1), &(1, 1), &mut false)
+            Arrow::get_char(&(0, 0).into(), &(0, 1).into(), &(1, 1).into(), &mut false)
         );
         assert_eq!(
             CORNER_2,
-            Arrow::get_char(&(1, 1), &(0, 1), &(0, 0), &mut false)
+            Arrow::get_char(&(1, 1).into(), &(0, 1).into(), &(0, 0).into(), &mut false)
         );
     }
 
@@ -196,11 +196,11 @@ mod test {
     fn should_get_corner_3() {
         assert_eq!(
             CORNER_3,
-            Arrow::get_char(&(0, 1), &(0, 0), &(1, 0), &mut false)
+            Arrow::get_char(&(0, 1).into(), &(0, 0).into(), &(1, 0).into(), &mut false)
         );
         assert_eq!(
             CORNER_3,
-            Arrow::get_char(&(1, 0), &(0, 0), &(0, 1), &mut false)
+            Arrow::get_char(&(1, 0).into(), &(0, 0).into(), &(0, 1).into(), &mut false)
         );
     }
 
@@ -208,11 +208,11 @@ mod test {
     fn should_get_corner_4() {
         assert_eq!(
             CORNER_4,
-            Arrow::get_char(&(0, 0), &(1, 0), &(1, 1), &mut false)
+            Arrow::get_char(&(0, 0).into(), &(1, 0).into(), &(1, 1).into(), &mut false)
         );
         assert_eq!(
             CORNER_4,
-            Arrow::get_char(&(1, 1), &(1, 0), &(0, 0), &mut false)
+            Arrow::get_char(&(1, 1).into(), &(1, 0).into(), &(0, 0).into(), &mut false)
         );
     }
 
@@ -220,7 +220,7 @@ mod test {
     fn should_get_down_arrow() {
         assert_eq!(
             ARROW_DOWN,
-            Arrow::get_char(&(0, 0), &(0, 1), &(0, 2), &mut true)
+            Arrow::get_char(&(0, 0).into(), &(0, 1).into(), &(0, 2).into(), &mut true)
         );
     }
 
@@ -228,7 +228,7 @@ mod test {
     fn should_get_up_arrow() {
         assert_eq!(
             ARROW_UP,
-            Arrow::get_char(&(0, 2), &(0, 1), &(0, 0), &mut true)
+            Arrow::get_char(&(0, 2).into(), &(0, 1).into(), &(0, 0).into(), &mut true)
         );
     }
 
@@ -236,7 +236,7 @@ mod test {
     fn should_get_left_arrow() {
         assert_eq!(
             ARROW_LEFT,
-            Arrow::get_char(&(2, 0), &(1, 0), &(0, 0), &mut true)
+            Arrow::get_char(&(2, 0).into(), &(1, 0).into(), &(0, 0).into(), &mut true)
         );
     }
 
@@ -244,16 +244,16 @@ mod test {
     fn should_get_right_arrow() {
         assert_eq!(
             ARROW_RIGHT,
-            Arrow::get_char(&(0, 0), &(1, 0), &(2, 0), &mut true)
+            Arrow::get_char(&(0, 0).into(), &(1, 0).into(), &(2, 0).into(), &mut true)
         );
     }
 
     #[test]
     fn should_remove_point_when_revisiting_previous_point() {
         let mut arrow = Arrow::init();
-        arrow.points = vec![(0, 0), (1, 0), (2, 0)];
+        arrow.points = vec![Vec2::new(0, 0), Vec2::new(1, 0), Vec2::new(2, 0)];
         arrow.update((1, 0).into());
-        let expected = vec![(0, 0), (1, 0)];
+        let expected = vec![Vec2::new(0, 0), Vec2::new(1, 0)];
         assert_eq!(arrow.points, expected);
     }
 }

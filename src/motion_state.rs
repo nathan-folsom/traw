@@ -80,7 +80,7 @@ where
         .flat_map(|(x, col)| {
             col.iter()
                 .enumerate()
-                .map(|(y, point)| (Vec2::new(x as u16, y as u16), point.shape_id))
+                .map(|(y, point)| (Vec2::from((x, y)), point.shape_id))
                 .collect::<ShapePositions>()
         })
         .collect();

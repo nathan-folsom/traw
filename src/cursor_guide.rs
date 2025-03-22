@@ -2,10 +2,11 @@ use crate::{
     characters::{HORIZONTAL_BAR, VERTICAL_BAR},
     cursor::cursor_position,
     draw::{Color, Draw, Point},
+    util::Vec2,
 };
 
 pub struct CursorGuide {
-    points: Vec<(i32, i32)>,
+    points: Vec<Vec2<i32>>,
 }
 
 impl CursorGuide {
@@ -31,32 +32,28 @@ impl CursorGuide {
 
 impl Draw for CursorGuide {
     fn draw(&self) -> std::io::Result<Vec<Point<i32>>> {
-        let position = cursor_position();
-        let c_x = position.x as i32;
-        let c_y = position.y as i32;
+        let c: Vec2<i32> = cursor_position().into();
         let mut points = vec![];
-        self.points.iter().for_each(|(_x, _y)| {
-            let x = *_x;
-            let y = *_y;
-            match (c_x == x, c_y == y) {
+        self.points
+            .iter()
+            .for_each(|p| match (c.x == p.x, c.y == p.y) {
                 (true, false) => {
-                    for i in (y.min(c_y) + 1)..y.max(c_y) {
-                        points.push(Self::get_point(x, i, VERTICAL_BAR));
+                    for i in (p.y.min(c.y) + 1)..p.y.max(c.y) {
+                        points.push(Self::get_point(p.x, i, VERTICAL_BAR));
                     }
                 }
                 (false, true) => {
-                    for i in (x.min(c_x) + 1)..x.max(c_x) {
-                        points.push(Self::get_point(i, y, HORIZONTAL_BAR));
+                    for i in (p.x.min(c.y) + 1)..p.x.max(c.x) {
+                        points.push(Self::get_point(i, p.y, HORIZONTAL_BAR));
                     }
                 }
                 _ => {}
-            }
-        });
+            });
         Ok(points)
     }
 }
 
 /// Used for showing guides when the cursor lines up with an object in one dimension
 pub trait GuidePoint {
-    fn get_intersection_points(&self) -> Vec<(i32, i32)>;
+    fn get_intersection_points(&self) -> Vec<Vec2<i32>>;
 }
