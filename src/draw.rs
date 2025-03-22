@@ -1,4 +1,4 @@
-use std::io::Result;
+use std::{io::Result, ops::Deref};
 
 use crate::{cursor::cursor_position, mode::Anchor, util::Vec2};
 
@@ -51,18 +51,23 @@ pub enum EdgeIntersection {
 
 #[derive(Debug, Clone)]
 pub struct Point<T> {
-    pub x: T,
-    pub y: T,
+    pub origin: Vec2<T>,
     pub character: char,
     pub foreground: Color,
     pub background: Color,
 }
 
+impl<T> Deref for Point<T> {
+    type Target = Vec2<T>;
+    fn deref(&self) -> &Self::Target {
+        &self.origin
+    }
+}
+
 impl From<Point<u16>> for Point<i32> {
     fn from(val: Point<u16>) -> Self {
         Point {
-            x: val.x as i32,
-            y: val.y as i32,
+            origin: val.origin.into(),
             character: val.character,
             foreground: val.foreground,
             background: val.background,

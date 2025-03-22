@@ -121,17 +121,10 @@ impl Renderer {
     }
 
     fn draw_at(&mut self, point: Point<i32>, shape_id: Option<u32>) -> std::io::Result<()> {
-        let Point {
-            x,
-            y,
-            character,
-            foreground,
-            background,
-        } = point;
-        self.state[x as usize][y as usize] = StatePoint {
-            character,
-            foreground,
-            background,
+        self.state[point.x as usize][point.y as usize] = StatePoint {
+            character: point.character,
+            foreground: point.foreground,
+            background: point.background,
             shape_id,
         };
 

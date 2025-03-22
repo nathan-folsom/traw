@@ -4,6 +4,7 @@ use crate::{
     cursor::cursor_position,
     draw::{DrawSticky, Point},
     mode::Mode,
+    util::Vec2,
 };
 
 #[derive(Default)]
@@ -68,8 +69,7 @@ impl DrawSticky for StatusBar {
             }
 
             row.push(Point {
-                x,
-                y: h - self.y,
+                origin: Vec2 { x, y: h - self.y },
                 character: next_char,
                 foreground: crate::draw::Color::Empty,
                 background: crate::draw::Color::EmptyBackground,

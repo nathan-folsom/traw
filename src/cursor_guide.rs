@@ -21,8 +21,7 @@ impl CursorGuide {
 
     fn get_point(x: i32, y: i32, character: char) -> Point<i32> {
         Point {
-            x,
-            y,
+            origin: Vec2 { x, y },
             character,
             foreground: Color::Guide,
             background: Color::EmptyBackground,

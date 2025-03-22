@@ -53,8 +53,7 @@ impl Arrow {
 
     fn get_point(&self, Vec2 { x, y }: &Vec2<i32>, c: char) -> Result<Point<i32>> {
         Ok(Point {
-            x: *x,
-            y: *y,
+            origin: Vec2 { x: *x, y: *y },
             character: c,
             foreground: Self::FG,
             background: Self::BG,

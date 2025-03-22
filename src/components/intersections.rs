@@ -53,8 +53,7 @@ impl Intersections {
                                     }
                                 };
                                 intersection_points.push(Point {
-                                    x: p.x,
-                                    y: p.y,
+                                    origin: Vec2 { x: p.x, y: p.y, },
                                     character,
                                     foreground: Color::Border,
                                     background: Color::BorderBackground,

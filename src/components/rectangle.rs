@@ -113,8 +113,10 @@ impl Draw for Rectangle {
                 }
 
                 points.push(Point {
-                    x: self.x + x,
-                    y: self.y + y,
+                    origin: Vec2 {
+                        x: self.x + x,
+                        y: self.y + y,
+                    },
                     character: to_draw,
                     foreground,
                     background,

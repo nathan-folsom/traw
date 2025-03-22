@@ -1,6 +1,9 @@
 use crossterm::terminal;
 
-use crate::draw::{DrawSticky, Point};
+use crate::{
+    draw::{DrawSticky, Point},
+    util::Vec2,
+};
 
 pub const DEBUG_PANEL_HEIGHT: usize = 20;
 
@@ -45,8 +48,10 @@ impl DrawSticky for DebugPanel {
             for x in 0..w {
                 let character = message.chars().nth(x as usize).unwrap_or(' ');
                 points.push(Point {
-                    x,
-                    y: h - DEBUG_PANEL_HEIGHT as u16 + y as u16,
+                    origin: Vec2 {
+                        x,
+                        y: h - DEBUG_PANEL_HEIGHT as u16 + y as u16,
+                    },
                     character,
                     foreground: crate::draw::Color::Debug,
                     background: crate::draw::Color::DebugBackground,

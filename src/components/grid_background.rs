@@ -1,6 +1,9 @@
 use crossterm::terminal;
 
-use crate::draw::{Color, Draw, Point};
+use crate::{
+    draw::{Color, Draw, Point},
+    util::Vec2,
+};
 
 pub struct GridBackground {}
 
@@ -19,8 +22,7 @@ impl Draw for GridBackground {
                 if (x % 12 == 0 && y % 6 == 0) || ((x + 6) % 12 == 0 && (y + 3) % 6 == 0) {
                     points.push(
                         Point {
-                            x,
-                            y,
+                            origin: Vec2 { x, y },
                             character: '*',
                             foreground: Color::Grid,
                             background: Color::EmptyBackground,
