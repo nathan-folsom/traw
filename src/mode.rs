@@ -22,10 +22,7 @@ pub enum Mode {
 
 impl Mode {
     pub fn is_normal(&self) -> bool {
-        match self {
-            Mode::Normal => true,
-            _ => false,
-        }
+        matches!(self, Mode::Normal)
     }
 }
 
