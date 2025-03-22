@@ -32,6 +32,9 @@ traw [options]
 - 'd' (normal mode) - Toggle debug panel
 - 'u' (normal mode) - Undo
 - 'CTRL-r' (normal mode) - Redo
+- 'w' (normal mode) - Jump to beginning of next shape
+- 'b' (normal mode) - Jump back to beginning of previous shape
+- 'e' (normal mode) - Jump to end of next shape
 
 ## To-do
 
@@ -39,7 +42,6 @@ traw [options]
 
 Things that are useful and should be added:
 
-- Word motions: e.g. 'w' to go to start of next object
 - Infinite canvas: i.e. terminal is a window onto a larger space, instead of representing the whole space.
 - Move boxes
 - Configurable keybindings
