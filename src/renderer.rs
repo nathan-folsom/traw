@@ -46,20 +46,12 @@ impl Renderer {
             for col in 0..selection.width {
                 let x = col + selection.x;
                 let y = row + selection.y;
-                let Cell {
-                    character,
-                    foreground,
-                    background,
-                    shape_id: _,
-                } = self.state[x as usize][y as usize];
-                let is_background = matches!(foreground, Color::Grid)
-                    && matches!(background, Color::EmptyBackground);
-                if is_background {
-                    // Don't output background characters, they are purely aesthetic and won't
-                    // make as much visual sense without the whole window for context
+                let cell = &self.state[x as usize][y as usize];
+                if cell.shape_id.is_none() {
+                    // Only output drawn shapes, no background or other characters
                     continue;
                 }
-                content.push(character);
+                content.push(cell.character);
             }
             content.push('\n');
         }
