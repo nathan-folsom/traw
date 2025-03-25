@@ -22,6 +22,7 @@ use persistence::{load, save};
 use renderer::Renderer;
 use shape::Shape;
 use state::State;
+use util::yank::handle_yank;
 
 mod characters;
 mod components;
@@ -83,7 +84,7 @@ fn main() -> std::io::Result<()> {
                     },
                     Mode::Select(selection) => {
                         if key == 'y' {
-                            renderer.handle_yank(selection);
+                            handle_yank(&renderer, selection);
                         }
                         motion_state.handle_motions(key, &renderer, &state.mode)?;
                     }
@@ -94,7 +95,7 @@ fn main() -> std::io::Result<()> {
 
                 KeyCode::Enter => {
                     if let Mode::Select(selection) = &state.mode {
-                        renderer.handle_yank(selection);
+                        handle_yank(&renderer, selection);
                     }
                     state.handle_enter()?;
                 }

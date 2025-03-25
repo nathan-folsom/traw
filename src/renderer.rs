@@ -1,6 +1,5 @@
 use std::io::{stdout, Write};
 
-use cli_clipboard::{ClipboardContext, ClipboardProvider};
 use crossterm::{
     queue,
     style::{Print, SetBackgroundColor, SetForegroundColor},
@@ -9,7 +8,6 @@ use crossterm::{
 use crate::{
     cursor::{restore_position, save_position, set_position},
     draw::{Color, DrawOverlay, OverlayPoint, Point},
-    mode::Selection,
 };
 
 pub struct Renderer {
@@ -22,10 +20,10 @@ pub struct Renderer {
 
 #[derive(PartialEq, Clone, Debug)]
 pub struct Cell {
-    character: char,
+    pub character: char,
+    pub shape_id: Option<u32>,
     foreground: Color,
     background: Color,
-    pub shape_id: Option<u32>,
 }
 
 impl Renderer {
@@ -37,25 +35,6 @@ impl Renderer {
             height,
             is_first_frame: true,
         }
-    }
-
-    pub fn handle_yank(&self, selection: &Selection) {
-        let mut ctx = ClipboardContext::new().unwrap();
-        let mut content = vec![];
-        for row in 0..selection.height {
-            for col in 0..selection.width {
-                let x = col + selection.x;
-                let y = row + selection.y;
-                let cell = &self.state[x as usize][y as usize];
-                if cell.shape_id.is_none() {
-                    // Only output drawn shapes, no background or other characters
-                    continue;
-                }
-                content.push(cell.character);
-            }
-            content.push('\n');
-        }
-        ctx.set_contents(content.iter().collect()).unwrap();
     }
 
     pub fn render_frame<F>(&mut self, mut cb: F) -> std::io::Result<()>
